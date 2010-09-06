@@ -5,6 +5,33 @@ Encoders and decoders for Solr requests and responses
 from xml.etree import cElementTree as ElementTree
 from datetime import date, datetime
 
+from zope.interface import implements
+from twisted.internet import defer
+from twisted.web.iweb import IBodyProducer
+
+
+class StringProducer(object):
+    """
+    Very basic producer used for Agent requests
+    """
+
+    implements(IBodyProducer)
+
+    def __init__(self, body):
+        self.body = unicode(body)
+        self.length = len(body)
+
+    def startProducing(self, consumer):
+        consumer.write(self.body)
+        return defer.succeed(None)
+
+    def pauseProducing(self):
+        pass
+
+    def stopProducing(self):
+        pass
+
+
 class XMLInput(object):
     """
     Creates XML input messages for Solr
@@ -53,7 +80,8 @@ class XMLInput(object):
                     docElement.append(fieldElement)
             addElement.append(docElement)
 
-        return ElementTree.tostring(addElement)
+        result = ElementTree.tostring(addElement)
+        return StringProducer(result)
 
     def createDelete(self, id):
         deleteElement = ElementTree.Element('delete')
@@ -67,8 +95,8 @@ class XMLInput(object):
             idElement.text = unicode(id)
             deleteElement.append(idElement)
 
-        return ElementTree.tostring(deleteElement)
-
+        result = ElementTree.tostring(deleteElement)
+        return StringProducer(result)
 
     def createDeleteQuery(self):
         """Missing"""

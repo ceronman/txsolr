@@ -44,7 +44,7 @@ class XMLInputTest(unittest.TestCase):
         document = {'id': 1, 'text': 'hello'}
         expected = ('<add><doc><field name="text">hello</field>'
                     '<field name="id">1</field></doc></add>')
-        self.assertEqual(self.input.createAdd([document]), expected)
+        self.assertEqual(self.input.createAdd([document]).body, expected)
         self.assertRaises(AttributeError, self.input.createAdd, document)
 
         document = {'id': 1, 'collection': [1, 2, 3]}
@@ -53,7 +53,7 @@ class XMLInputTest(unittest.TestCase):
                     '<field name="collection">2</field>'
                     '<field name="collection">3</field></doc></add>')
 
-        self.assertEqual(self.input.createAdd([document]), expected)
+        self.assertEqual(self.input.createAdd([document]).body, expected)
 
     def test_createDelete(self):
         """
@@ -62,15 +62,15 @@ class XMLInputTest(unittest.TestCase):
 
         id = 123
         expected = '<delete><id>123</id></delete>'
-        self.assertEqual(self.input.createDelete(id), expected)
+        self.assertEqual(self.input.createDelete(id).body, expected)
 
         id = '<hola>'
         expected = '<delete><id>&lt;hola&gt;</id></delete>'
-        self.assertEqual(self.input.createDelete(id), expected)
+        self.assertEqual(self.input.createDelete(id).body, expected)
 
         id = [1, 2, 3]
         expected = '<delete><id>1</id><id>2</id><id>3</id></delete>'
-        self.assertEqual(self.input.createDelete(id), expected)
+        self.assertEqual(self.input.createDelete(id).body, expected)
 
 
 
