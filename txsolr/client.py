@@ -4,7 +4,7 @@ Solr Client for Twisted
 
 import urlparse
 
-from twisted.internet import reactor, defer
+from twisted.internet import reactor
 from twisted.web.client import Agent
 from twisted.web.http_headers import Headers
 
