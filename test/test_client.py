@@ -12,23 +12,15 @@ class ClientTest(unittest.TestCase):
     def setUp(self):
         self.client = SolrClient(SOLR_URL)
 
+
+    @defer.inlineCallbacks
     def test_wrongResponseRequest(self):
-        result = defer.Deferred()
 
-        d = self.client._request('GET', '', {}, None)
-
-        def callback(content):
-            result.errback('Request should fail')
-        d.addCallback(callback)
-
-        def errback(failure):
-            if isinstance(failure.value, WrongResponseCode):
-                result.callback(None)
-            else:
-                result.errback('Error should be WrongResponseCode')
-        d.addErrback(errback)
-
-        return result
+        try:
+            yield self.client._request('GET', '', {}, None)
+            defer.returnValue(None)
+        except WrongResponseCode:
+            pass
 
     @defer.inlineCallbacks
     def test_addRequest(self):
@@ -41,6 +33,7 @@ class ClientTest(unittest.TestCase):
 
         yield self.client.add(documents)
         yield self.client.add(tuple(documents))
+        defer.returnValue(None)
 
     @defer.inlineCallbacks
     def test_deleteRequest(self):
@@ -51,17 +44,13 @@ class ClientTest(unittest.TestCase):
         yield self.client.delete(ids)
         yield self.client.delete(tuple(ids))
         yield self.client.delete(set(ids))
-
         defer.returnValue(None)
 
     def test_commitRequest(self):
         return self.client.commit()
 
-    @defer.inlineCallbacks
     def test_rollbackRequest(self):
-        yield self.client.commit()
         yield self.client.rollback()
-        defer.returnValue(None)
 
     def test_optimizeRequest(self):
         return self.client.optimize()
