@@ -38,14 +38,13 @@ class XMLInputTest(unittest.TestCase):
         Tests the creation of add input for the request
         """
 
-        self.assertRaises(TypeError, self.input.createAdd, None)
+        self.assertRaises(AttributeError, self.input.createAdd, None)
         self.assertRaises(AttributeError, self.input.createAdd, 'string')
 
         document = {'id': 1, 'text': 'hello'}
         expected = ('<add><doc><field name="text">hello</field>'
                     '<field name="id">1</field></doc></add>')
-        self.assertEqual(self.input.createAdd([document]).body, expected)
-        self.assertRaises(AttributeError, self.input.createAdd, document)
+        self.assertEqual(self.input.createAdd(document).body, expected)
 
         document = {'id': 1, 'collection': [1, 2, 3]}
         expected = ('<add><doc><field name="id">1</field>'
@@ -53,7 +52,7 @@ class XMLInputTest(unittest.TestCase):
                     '<field name="collection">2</field>'
                     '<field name="collection">3</field></doc></add>')
 
-        self.assertEqual(self.input.createAdd([document]).body, expected)
+        self.assertEqual(self.input.createAdd(document).body, expected)
 
     def test_createDelete(self):
         """

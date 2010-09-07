@@ -30,9 +30,38 @@ class ClientTest(unittest.TestCase):
 
         return result
 
-    def test_add(self):
+    @defer.inlineCallbacks
+    def test_addRequest(self):
         document = {'id': 1, 'text': 'manuel ceron'}
-        return self.client.add([document])
+        yield self.client.add(document)
 
-    def test_commit(self):
+        documents = [ {'id': 1, 'text': 'manuel ceron'},
+                      {'id': 2, 'text': 'fluidinfo'},
+                      {'id': 3, 'text': 'solr'} ]
+
+        yield self.client.add(documents)
+        yield self.client.add(tuple(documents))
+
+    @defer.inlineCallbacks
+    def test_deleteRequest(self):
+        id = 1
+        yield self.client.delete(id)
+
+        ids = [1, 2, 3, 4]
+        yield self.client.delete(ids)
+        yield self.client.delete(tuple(ids))
+        yield self.client.delete(set(ids))
+
+        defer.returnValue(None)
+
+    def test_commitRequest(self):
         return self.client.commit()
+
+    @defer.inlineCallbacks
+    def test_rollbackRequest(self):
+        yield self.client.commit()
+        yield self.client.rollback()
+        defer.returnValue(None)
+
+    def test_optimizeRequest(self):
+        return self.client.optimize()

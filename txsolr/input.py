@@ -55,16 +55,21 @@ class SimpleXMLInputFactory(object):
     def _decodeValue(self, value):
         pass
 
-    def createAdd(self, documents):
+    def createAdd(self, document):
         """
         Create an add request in XML format
         """
 
+        if isinstance(document, (tuple, list, set)):
+            documents = document
+        else:
+            documents = [document]
+
         addElement = ElementTree.Element('add')
-        for document in documents:
+        for doc in documents:
 
             docElement = ElementTree.Element('doc')
-            for key, value in document.iteritems():
+            for key, value in doc.iteritems():
 
                 if isinstance(value, (tuple, list, set)):
                     values = value
@@ -84,11 +89,13 @@ class SimpleXMLInputFactory(object):
         return StringProducer(result)
 
     def createDelete(self, id):
-        deleteElement = ElementTree.Element('delete')
+
         if isinstance(id, (tuple, list, set)):
             ids = id
         else:
             ids = [id]
+
+        deleteElement = ElementTree.Element('delete')
 
         for id in ids:
             idElement = ElementTree.Element('id')
@@ -107,11 +114,12 @@ class SimpleXMLInputFactory(object):
         result = ElementTree.tostring(commitElement)
         return StringProducer(result)
 
-    def createOptimize(self):
-        """Missing"""
-        pass
-
     def createRollback(self):
-        """Missing"""
-        pass
+        rollbackElement = ElementTree.Element('rollback')
+        result = ElementTree.tostring(rollbackElement)
+        return StringProducer(result)
 
+    def createOptimize(self):
+        optimizeElement = ElementTree.Element('optimize')
+        result = ElementTree.tostring(optimizeElement)
+        return StringProducer(result)

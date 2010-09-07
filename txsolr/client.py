@@ -65,7 +65,6 @@ class SolrClient(object):
                 response.deliverBody(deliveryProtocol)
                 result.errback(WrongResponseCode(response.code))
             else:
-                print response.version
                 deliveryProtocol = _StringConsumer(result)
                 response.deliverBody(deliveryProtocol)
         d.addCallback(responseCallback)
@@ -88,15 +87,30 @@ class SolrClient(object):
         input = self.inputFactory.createAdd(documents)
         return self._update(input)
 
+    def delete(self, ids):
+        input = self.inputFactory.createDelete(ids)
+        return self._update(input)
+
     # TODO: add parameters
     def commit(self):
         input = self.inputFactory.createCommit()
         return self._update(input)
 
+    def rollback(self):
+        input = self.inputFactory.createRollback()
+        return self._update(input)
+
+    # TODO: add parameters
+    def optimize(self):
+        input = self.inputFactory.createOptimize()
+        return self._update(input)
+
 if __name__ == '__main__':
     c = SolrClient('http://localhost:8983/solr/')
     document = {'id': 1, 'text': 'manuel ceron'}
-    d = c.add([document])
+#    d = c.add([document])
+#    d = c.rollback()
+    d = c.delete(1000)
 
     def cb(content):
         print 'Delivery:'
