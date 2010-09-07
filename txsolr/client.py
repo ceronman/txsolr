@@ -88,6 +88,11 @@ class SolrClient(object):
         input = self.inputFactory.createAdd(documents)
         return self._update(input)
 
+    # TODO: add parameters
+    def commit(self):
+        input = self.inputFactory.createCommit()
+        return self._update(input)
+
 if __name__ == '__main__':
     c = SolrClient('http://localhost:8983/solr/')
     document = {'id': 1, 'text': 'manuel ceron'}

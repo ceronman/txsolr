@@ -33,3 +33,6 @@ class ClientTest(unittest.TestCase):
     def test_add(self):
         document = {'id': 1, 'text': 'manuel ceron'}
         return self.client.add([document])
+
+    def test_commit(self):
+        return self.client.commit()

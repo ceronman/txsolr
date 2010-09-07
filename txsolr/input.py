@@ -103,8 +103,9 @@ class SimpleXMLInputFactory(object):
         pass
 
     def createCommit(self):
-        """Missing"""
-        pass
+        commitElement = ElementTree.Element('commit')
+        result = ElementTree.tostring(commitElement)
+        return StringProducer(result)
 
     def createOptimize(self):
         """Missing"""
