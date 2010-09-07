@@ -32,7 +32,7 @@ class StringProducer(object):
         pass
 
 
-class XMLInput(object):
+class SimpleXMLInputFactory(object):
     """
     Creates XML input messages for Solr
     """

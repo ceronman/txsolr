@@ -8,7 +8,7 @@ from twisted.web.client import Agent, ResponseDone
 from twisted.web.http_headers import Headers
 from twisted.python import log
 
-from txsolr.input import XMLInput
+from txsolr.input import SimpleXMLInputFactory
 from txsolr.errors import WrongResponseCode
 
 
@@ -36,17 +36,19 @@ class SolrClient(object):
     A Solr Client. Used to make requests to a Solr Server
     """
 
-    def __init__(self, url, inputCreator=XMLInput()):
+    def __init__(self, url, inputFactory=None):
         """
         Creates the Solr Client object
 
         @param url: the url of the Solr server
-        @param inputCreator: a class that is going to produce the input for the
+        @param inputFactory: a class that is going to produce the input for the
                              server, by default uses a simple input creator
         """
 
         self.url = url.rstrip('/')
-        self.inputCreator = inputCreator
+        if inputFactory == None:
+            self.inputFactory = SimpleXMLInputFactory()
+
         self._agent = Agent(reactor)
 
     def _request(self, method, path, headers, bodyProducer):
@@ -74,14 +76,17 @@ class SolrClient(object):
 
         return result
 
+    def _update(self, input):
+        method = 'POST'
+        path = '/update'
+        headers = { 'Content-Type': [self.inputFactory.contentType] }
+        return self._request(method, path, headers, input)
+
     # TODO: add parameters: overwrite, commitWithin and boost for docs and
     # Fields
     def add(self, documents):
-        method = 'POST'
-        path = '/update'
-        input = self.inputCreator.createAdd(documents)
-        headers = { 'Content-Type': [self.inputCreator.contentType] }
-        return self._request(method, path, headers, input)
+        input = self.inputFactory.createAdd(documents)
+        return self._update(input)
 
 if __name__ == '__main__':
     c = SolrClient('http://localhost:8983/solr/')

@@ -1,12 +1,12 @@
 import unittest
 from datetime import datetime, date
 
-from txsolr.input import XMLInput
+from txsolr.input import SimpleXMLInputFactory
 
 class XMLInputTest(unittest.TestCase):
 
     def setUp(self):
-        self.input = XMLInput()
+        self.input = SimpleXMLInputFactory()
 
     def test_encodeValue(self):
         """
