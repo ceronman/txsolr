@@ -2,13 +2,33 @@
 Solr Client for Twisted
 """
 
-import urlparse
-
-from twisted.internet import reactor
-from twisted.web.client import Agent
+from twisted.internet import reactor, defer
+from twisted.internet.protocol import Protocol
+from twisted.web.client import Agent, ResponseDone
 from twisted.web.http_headers import Headers
+from twisted.python import log
 
 from txsolr.input import XMLInput
+from txsolr.errors import WrongResponseCode
+
+
+class _StringConsumer(Protocol):
+    def __init__(self, deferred):
+        self.body = ''
+        self.deferred = deferred
+
+    def dataReceived(self, bytes):
+        self.body += bytes
+
+    def connectionLost(self, reason):
+        if not isinstance(reason.value, ResponseDone):
+            log.msg('Warning: unclean response: ' + str(reason.value))
+        self.deferred.callback(self.body)
+
+class _EmptyConsumer(Protocol):
+
+    def conectionMade(self, bytes):
+        self.transport.stopProducing()
 
 
 class SolrClient(object):
@@ -16,7 +36,7 @@ class SolrClient(object):
     A Solr Client. Used to make requests to a Solr Server
     """
 
-    def __init__(self, url, inputCreator=XMLInput):
+    def __init__(self, url, inputCreator=XMLInput()):
         """
         Creates the Solr Client object
 
@@ -30,10 +50,52 @@ class SolrClient(object):
         self._agent = Agent(reactor)
 
     def _request(self, method, path, headers, bodyProducer):
-        url = urlparse.urljoin(self.url, path)
+        result = defer.Deferred()
+
+        url = self.url + path
         headers.update({'User-Agent': ['txSolr']})
         headers = Headers(headers)
-        return self._agent.request(method, url, headers, bodyProducer)
+        d = self._agent.request(method, url, headers, bodyProducer)
 
+        def responseCallback(response):
+            if response.code != 200:
+                deliveryProtocol = _EmptyConsumer()
+                response.deliverBody(deliveryProtocol)
+                result.errback(WrongResponseCode(response.code))
+            else:
+                print response.version
+                deliveryProtocol = _StringConsumer(result)
+                response.deliverBody(deliveryProtocol)
+        d.addCallback(responseCallback)
 
+        def responseErrback(failure):
+            result.errback(failure.value)
+        d.addErrback(responseErrback)
 
+        return result
+
+    # TODO: add parameters: overwrite, commitWithin and boost for docs and
+    # Fields
+    def add(self, documents):
+        method = 'POST'
+        path = '/update'
+        input = self.inputCreator.createAdd(documents)
+        headers = { 'Content-Type': [self.inputCreator.contentType] }
+        return self._request(method, path, headers, input)
+
+if __name__ == '__main__':
+    c = SolrClient('http://localhost:8983/solr/')
+    document = {'id': 1, 'text': 'manuel ceron'}
+    d = c.add([document])
+
+    def cb(content):
+        print 'Delivery:'
+        print content
+    d.addCallback(cb)
+
+    def er(failure):
+        print 'Error:'
+        print failure.getErrorMessage()
+        print failure.getTraceback()
+    d.addErrback(er)
+    reactor.run()

@@ -18,7 +18,7 @@ class StringProducer(object):
     implements(IBodyProducer)
 
     def __init__(self, body):
-        self.body = unicode(body)
+        self.body = str(body)
         self.length = len(body)
 
     def startProducing(self, consumer):
