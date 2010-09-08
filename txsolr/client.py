@@ -2,15 +2,17 @@
 Solr Client for Twisted
 """
 
+import logging
+
 from twisted.internet import reactor, defer
 from twisted.internet.protocol import Protocol
 from twisted.web.client import Agent, ResponseDone
 from twisted.web.http_headers import Headers
-from twisted.python import log
 
 from txsolr.input import SimpleXMLInputFactory
 from txsolr.errors import WrongResponseCode
 
+_logger = logging.getLogger('txsolr')
 
 class _StringConsumer(Protocol):
     def __init__(self, deferred):
@@ -22,7 +24,7 @@ class _StringConsumer(Protocol):
 
     def connectionLost(self, reason):
         if not isinstance(reason.value, ResponseDone):
-            log.msg('Warning: unclean response: ' + str(reason.value))
+            _logger.warning('unclean response: ' + str(reason.value))
         self.deferred.callback(self.body)
 
 class _EmptyConsumer(Protocol):
@@ -57,9 +59,11 @@ class SolrClient(object):
         url = self.url + path
         headers.update({'User-Agent': ['txSolr']})
         headers = Headers(headers)
+        _logger.debug('Requesting: ' + url)
         d = self._agent.request(method, url, headers, bodyProducer)
 
         def responseCallback(response):
+            _logger.debug('Received response from ' + url)
             if response.code != 200:
                 deliveryProtocol = _EmptyConsumer()
                 response.deliverBody(deliveryProtocol)
