@@ -4,7 +4,11 @@ Solr Client for Twisted
 
 import logging
 import urllib
-import simplejson as json
+
+try:
+    import json # python >= 2.6
+except ImportError:
+    import simplejson as json # python < 2.6
 
 from twisted.internet import reactor, defer
 from twisted.internet.protocol import Protocol
@@ -12,11 +16,11 @@ from twisted.web.client import Agent, ResponseDone
 from twisted.web.http_headers import Headers
 
 from txsolr.input import SimpleXMLInputFactory, StringProducer
-from txsolr.errors import WrongResponseCode
+from txsolr.errors import WrongHTTPStatus, SolrResponseError
 
 _logger = logging.getLogger('txsolr')
 
-class _StringConsumer(Protocol):
+class _SimpleJSONConsumer(Protocol):
     def __init__(self, deferred):
         self.body = ''
         self.deferred = deferred
@@ -26,8 +30,27 @@ class _StringConsumer(Protocol):
 
     def connectionLost(self, reason):
         if not isinstance(reason.value, ResponseDone):
-            _logger.warning('unclean response: ' + str(reason.value))
-        self.deferred.callback(self.body)
+            _logger.warning('unclean response: ' + repr(reason.value))
+
+        try:
+            response = json.loads(self.body)
+        except ValueError:
+            msg = 'Unable to decode response using json:\n%s' % self.body
+            self.deferred.errback(SolrResponseError(msg))
+            return
+        try:
+            status = response[u'responseHeader'][u'status']
+        except KeyError:
+            msg = 'Response does not contain status:\n%s' % self.body
+            self.deferred.errback(SolrResponseError(msg))
+            return
+
+        if status != 0:
+            msg = 'Response with invalid status code:\n%s' % self.body
+            self.deferred.errback(SolrResponseError(msg))
+            return
+
+        self.deferred.callback(response)
 
 class _EmptyConsumer(Protocol):
 
@@ -71,9 +94,9 @@ class SolrClient(object):
             if response.code != 200:
                 deliveryProtocol = _EmptyConsumer()
                 response.deliverBody(deliveryProtocol)
-                result.errback(WrongResponseCode(response.code))
+                result.errback(WrongHTTPStatus(response.code))
             else:
-                deliveryProtocol = _StringConsumer(result)
+                deliveryProtocol = _SimpleJSONConsumer(result)
                 response.deliverBody(deliveryProtocol)
         d.addCallback(responseCallback)
 
@@ -85,7 +108,7 @@ class SolrClient(object):
 
     def _update(self, input):
         method = 'POST'
-        path = '/update'
+        path = '/update?wt=json'
         headers = { 'Content-Type': [self.inputFactory.contentType] }
         return self._request(method, path, headers, input)
 
@@ -133,6 +156,9 @@ class SolrClient(object):
         input = self.inputFactory.createOptimize()
         return self._update(input)
 
+    def search(self, query, params):
+        pass
+
 if __name__ == '__main__':
     import sys
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -153,4 +179,6 @@ if __name__ == '__main__':
         print failure.getErrorMessage()
         print failure.getTraceback()
     d.addErrback(er)
+
+    d.addBoth(lambda _: reactor.stop())
     reactor.run()

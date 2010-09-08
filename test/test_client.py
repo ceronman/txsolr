@@ -5,7 +5,7 @@ from twisted.trial import unittest
 from twisted.internet import defer
 
 from txsolr.client import SolrClient
-from txsolr.errors import WrongResponseCode
+from txsolr.errors import WrongHTTPStatus
 
 # FIXME: avoid hardcoded url
 SOLR_URL = 'http://localhost:8983/solr/'
@@ -24,7 +24,7 @@ class ClientTest(unittest.TestCase):
         try:
             yield self.client._request('GET', '', {}, None)
             defer.returnValue(None)
-        except WrongResponseCode:
+        except WrongHTTPStatus:
             pass
 
     @defer.inlineCallbacks
