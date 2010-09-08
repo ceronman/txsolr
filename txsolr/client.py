@@ -159,8 +159,11 @@ class SolrClient(object):
         input = self.inputFactory.createOptimize()
         return self._update(input)
 
-    def search(self, query, params):
+    def search(self, query, **kwargs):
+        params = {}
+        params.update(kwargs)
         params.update(q=query.encode('UTF-8'))
+        return self._select(params)
 
 if __name__ == '__main__':
     import sys
@@ -170,7 +173,8 @@ if __name__ == '__main__':
 #    d = c.add([document])
 #    d = c.rollback()
 #    d = c.delete(1000)
-    d = c._select({'q': 'manuel'.encode('UTF-8'), 'indent': 'true'})
+#    d = c._select({'q': 'manuel'.encode('UTF-8'), 'indent': 'true'})
+    d = c.search('manuel')
 
     def cb(content):
         print 'Delivery:'

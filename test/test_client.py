@@ -64,7 +64,7 @@ class ClientTest(unittest.TestCase):
         return self.client.optimize()
 
     @defer.inlineCallbacks
-    def test_select(self):
+    def test_selectRequest(self):
         params = dict(q='manuel', wt='json', indent='true')
         yield self.client._select(params)
 
@@ -73,4 +73,7 @@ class ClientTest(unittest.TestCase):
         yield self.client._select(params)
 
         defer.returnValue(None)
+
+    def test_searchRequest(self):
+        return self.client.search("manuel")
 
