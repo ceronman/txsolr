@@ -3,13 +3,15 @@ Solr Client for Twisted
 """
 
 import logging
+import urllib
+import simplejson as json
 
 from twisted.internet import reactor, defer
 from twisted.internet.protocol import Protocol
 from twisted.web.client import Agent, ResponseDone
 from twisted.web.http_headers import Headers
 
-from txsolr.input import SimpleXMLInputFactory
+from txsolr.input import SimpleXMLInputFactory, StringProducer
 from txsolr.errors import WrongResponseCode
 
 _logger = logging.getLogger('txsolr')
@@ -32,6 +34,8 @@ class _EmptyConsumer(Protocol):
     def conectionMade(self, bytes):
         self.transport.stopProducing()
 
+class SolrJSONDecoder(json.JSONDecoder):
+    wt = 'json'
 
 class SolrClient(object):
     """
@@ -59,7 +63,7 @@ class SolrClient(object):
         url = self.url + path
         headers.update({'User-Agent': ['txSolr']})
         headers = Headers(headers)
-        _logger.debug('Requesting: ' + url)
+        _logger.debug('Requesting: [%s] %s' % (method, url))
         d = self._agent.request(method, url, headers, bodyProducer)
 
         def responseCallback(response):
@@ -83,6 +87,22 @@ class SolrClient(object):
         method = 'POST'
         path = '/update'
         headers = { 'Content-Type': [self.inputFactory.contentType] }
+        return self._request(method, path, headers, input)
+
+    def _select(self, params):
+        query = urllib.urlencode(params)
+
+        if len(query) < 1024:
+            method = 'GET'
+            path = '/select' + '?' + query
+            headers = {}
+            input = None
+        else:
+            method = 'POST'
+            path = '/select'
+            headers = { 'Content-type': ['application/x-www-form-urlencoded'] }
+            input = StringProducer(query)
+
         return self._request(method, path, headers, input)
 
     # TODO: add parameters: overwrite, commitWithin and boost for docs and
@@ -110,11 +130,14 @@ class SolrClient(object):
         return self._update(input)
 
 if __name__ == '__main__':
+    import sys
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     c = SolrClient('http://localhost:8983/solr/')
     document = {'id': 1, 'text': 'manuel ceron'}
 #    d = c.add([document])
 #    d = c.rollback()
-    d = c.delete(1000)
+#    d = c.delete(1000)
+    d = c._select({'q': 'manuel'.encode('UTF-8'), 'wt': 'json', 'indent': 'true'})
 
     def cb(content):
         print 'Delivery:'
