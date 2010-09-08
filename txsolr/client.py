@@ -115,6 +115,10 @@ class SolrClient(object):
         input = self.inputFactory.createDelete(ids)
         return self._update(input)
 
+    def deleteByQuery(self, query):
+        input = self.inputFactory.createDelete(query)
+        return self._update(input)
+
     # TODO: add parameters
     def commit(self):
         input = self.inputFactory.createCommit()

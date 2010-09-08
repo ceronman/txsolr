@@ -1,3 +1,6 @@
+import random
+import string
+
 from twisted.trial import unittest
 from twisted.internet import defer
 
@@ -48,6 +51,9 @@ class ClientTest(unittest.TestCase):
         yield self.client.delete(set(ids))
         defer.returnValue(None)
 
+    def test_deleteByQueryRequest(self):
+        return self.client.deleteByQuery('*:*')
+
     def test_commitRequest(self):
         return self.client.commit()
 
@@ -56,3 +62,15 @@ class ClientTest(unittest.TestCase):
 
     def test_optimizeRequest(self):
         return self.client.optimize()
+
+    @defer.inlineCallbacks
+    def test_select(self):
+        params = dict(q='manuel', wt='json', indent='true')
+        yield self.client._select(params)
+
+        longQuery = ''.join(random.choice(string.letters) for _ in range(2000))
+        params.update(q=longQuery)
+        yield self.client._select(params)
+
+        defer.returnValue(None)
+

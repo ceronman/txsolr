@@ -89,7 +89,6 @@ class SimpleXMLInputFactory(object):
         return StringProducer(result)
 
     def createDelete(self, id):
-
         if isinstance(id, (tuple, list, set)):
             ids = id
         else:
@@ -105,9 +104,14 @@ class SimpleXMLInputFactory(object):
         result = ElementTree.tostring(deleteElement)
         return StringProducer(result)
 
-    def createDeleteQuery(self):
-        """Missing"""
-        pass
+    def createDeleteByQuery(self, query):
+        deleteElement = ElementTree.Element('delete')
+        queryElement = ElementTree.Element('query')
+        queryElement.text = query
+        deleteElement.append(queryElement)
+
+        result = ElementTree.tostring(deleteElement)
+        return StringProducer(result)
 
     def createCommit(self):
         commitElement = ElementTree.Element('commit')
