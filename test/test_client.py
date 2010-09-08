@@ -12,6 +12,8 @@ class ClientTest(unittest.TestCase):
     def setUp(self):
         self.client = SolrClient(SOLR_URL)
 
+    def test_requestPing(self):
+        return self.client._request('GET', '/admin/ping', {}, None)
 
     @defer.inlineCallbacks
     def test_wrongResponseRequest(self):
