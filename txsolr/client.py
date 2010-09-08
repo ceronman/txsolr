@@ -113,6 +113,9 @@ class SolrClient(object):
         return self._request(method, path, headers, input)
 
     def _select(self, params):
+        # force JSON response for now
+        params.update(wt='json')
+
         query = urllib.urlencode(params)
 
         if len(query) < 1024:
@@ -157,7 +160,7 @@ class SolrClient(object):
         return self._update(input)
 
     def search(self, query, params):
-        pass
+        params.update(q=query.encode('UTF-8'))
 
 if __name__ == '__main__':
     import sys
@@ -167,7 +170,7 @@ if __name__ == '__main__':
 #    d = c.add([document])
 #    d = c.rollback()
 #    d = c.delete(1000)
-    d = c._select({'q': 'manuel'.encode('UTF-8'), 'wt': 'json', 'indent': 'true'})
+    d = c._select({'q': 'manuel'.encode('UTF-8'), 'indent': 'true'})
 
     def cb(content):
         print 'Delivery:'
