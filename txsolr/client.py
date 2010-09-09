@@ -5,60 +5,17 @@ Solr Client for Twisted
 import logging
 import urllib
 
-try:
-    import json # python >= 2.6
-except ImportError:
-    import simplejson as json # python < 2.6
-
 from twisted.internet import reactor, defer
-from twisted.internet.protocol import Protocol
-from twisted.web.client import Agent, ResponseDone
+from twisted.web.client import Agent
 from twisted.web.http_headers import Headers
 
 from txsolr.input import SimpleXMLInputFactory, StringProducer
-from txsolr.errors import WrongHTTPStatus, SolrResponseError
+from txsolr.response import (ResponseConsumer, EmptyResponseConsumer,
+                             JSONSolrResponse)
+from txsolr.errors import WrongHTTPStatus
 
 _logger = logging.getLogger('txsolr')
 
-class _SimpleJSONConsumer(Protocol):
-    def __init__(self, deferred):
-        self.body = ''
-        self.deferred = deferred
-
-    def dataReceived(self, bytes):
-        self.body += bytes
-
-    def connectionLost(self, reason):
-        if not isinstance(reason.value, ResponseDone):
-            _logger.warning('unclean response: ' + repr(reason.value))
-
-        try:
-            response = json.loads(self.body)
-        except ValueError:
-            msg = 'Unable to decode response using json:\n%s' % self.body
-            self.deferred.errback(SolrResponseError(msg))
-            return
-        try:
-            status = response[u'responseHeader'][u'status']
-        except KeyError:
-            msg = 'Response does not contain status:\n%s' % self.body
-            self.deferred.errback(SolrResponseError(msg))
-            return
-
-        if status != 0:
-            msg = 'Response with invalid status code:\n%s' % self.body
-            self.deferred.errback(SolrResponseError(msg))
-            return
-
-        self.deferred.callback(response)
-
-class _EmptyConsumer(Protocol):
-
-    def conectionMade(self, bytes):
-        self.transport.stopProducing()
-
-class SolrJSONDecoder(json.JSONDecoder):
-    wt = 'json'
 
 class SolrClient(object):
     """
@@ -92,11 +49,11 @@ class SolrClient(object):
         def responseCallback(response):
             _logger.debug('Received response from ' + url)
             if response.code != 200:
-                deliveryProtocol = _EmptyConsumer()
+                deliveryProtocol = EmptyResponseConsumer()
                 response.deliverBody(deliveryProtocol)
                 result.errback(WrongHTTPStatus(response.code))
             else:
-                deliveryProtocol = _SimpleJSONConsumer(result)
+                deliveryProtocol = ResponseConsumer(result, JSONSolrResponse)
                 response.deliverBody(deliveryProtocol)
         d.addCallback(responseCallback)
 
@@ -169,12 +126,13 @@ if __name__ == '__main__':
     import sys
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     c = SolrClient('http://localhost:8983/solr/')
-    document = {'id': 1, 'text': 'manuel ceron'}
+    document = {'id': 1, 'text': 'manuel tres', 'name': 'tres'}
 #    d = c.add([document])
+    d = c.commit()
 #    d = c.rollback()
 #    d = c.delete(1000)
 #    d = c._select({'q': 'manuel'.encode('UTF-8'), 'indent': 'true'})
-    d = c.search('manuel')
+#    d = c.search('manuel')
 
     def cb(content):
         print 'Delivery:'
