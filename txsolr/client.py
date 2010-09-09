@@ -17,6 +17,7 @@ from txsolr.errors import WrongHTTPStatus
 _logger = logging.getLogger('txsolr')
 
 
+# TODO: decouple from JSON
 class SolrClient(object):
     """
     A Solr Client. Used to make requests to a Solr Server
@@ -121,6 +122,12 @@ class SolrClient(object):
         params.update(kwargs)
         params.update(q=query.encode('UTF-8'))
         return self._select(params)
+
+    def ping(self):
+        method = 'GET'
+        path = '/admin/ping?wt=json'
+        headers = {}
+        return self._request(method, path, headers, None)
 
 if __name__ == '__main__':
     import sys
