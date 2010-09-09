@@ -18,14 +18,24 @@ class ClientTest(unittest.TestCase):
     def test_requestPing(self):
         return self.client._request('GET', '/admin/ping?wt=json', {}, None)
 
-    @defer.inlineCallbacks
     def test_wrongResponseRequest(self):
+        result = defer.Deferred()
 
-        try:
-            yield self.client._request('GET', '', {}, None)
-            defer.returnValue(None)
-        except WrongHTTPStatus:
-            pass
+        d = self.client._request('GET', '', {}, None)
+
+        def cb(response):
+            result.errback('Request should fail')
+        d.addCallback(cb)
+
+        def er(failure):
+            if isinstance(failure.value, WrongHTTPStatus):
+                result.callback(None)
+            else:
+                result.errback('Got wrong failure')
+        d.addErrback(er)
+
+        return result
+
 
     @defer.inlineCallbacks
     def test_addRequest(self):
