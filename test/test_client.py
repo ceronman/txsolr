@@ -10,15 +10,16 @@ from txsolr.errors import WrongHTTPStatus
 # FIXME: avoid hardcoded url
 SOLR_URL = 'http://localhost:8983/solr/'
 
-class ClientTest(unittest.TestCase):
+
+class ConnectionTestCase(unittest.TestCase):
 
     def setUp(self):
         self.client = SolrClient(SOLR_URL)
 
     def test_requestPing(self):
-        return self.client._request('GET', '/admin/ping?wt=json', {}, None)
+        return self.client.ping()
 
-    def test_wrongResponseRequest(self):
+    def test_requestStatus(self):
         result = defer.Deferred()
 
         d = self.client._request('GET', '', {}, None)
@@ -36,54 +37,118 @@ class ClientTest(unittest.TestCase):
 
         return result
 
-
-    @defer.inlineCallbacks
     def test_addRequest(self):
-        document = {'id': 1, 'text': 'manuel ceron'}
-        yield self.client.add(document)
+        return self.client.add(dict(id=1))
 
-        documents = [ {'id': 1, 'text': 'manuel ceron'},
-                      {'id': 2, 'text': 'fluidinfo'},
-                      {'id': 3, 'text': 'solr'} ]
-
-        yield self.client.add(documents)
-        yield self.client.add(tuple(documents))
-        defer.returnValue(None)
-
-    @defer.inlineCallbacks
     def test_deleteRequest(self):
-        id = 1
-        yield self.client.delete(id)
-
-        ids = [1, 2, 3, 4]
-        yield self.client.delete(ids)
-        yield self.client.delete(tuple(ids))
-        yield self.client.delete(set(ids))
-        defer.returnValue(None)
+        return self.client.delete(1)
 
     def test_deleteByQueryRequest(self):
         return self.client.deleteByQuery('*:*')
 
-    def test_commitRequest(self):
-        return self.client.commit()
-
     def test_rollbackRequest(self):
         yield self.client.rollback()
+
+    def test_commitRequest(self):
+        return self.client.commit()
 
     def test_optimizeRequest(self):
         return self.client.optimize()
 
-    @defer.inlineCallbacks
-    def test_selectRequest(self):
-        params = dict(q='manuel', wt='json', indent='true')
-        yield self.client._select(params)
-
-        longQuery = ''.join(random.choice(string.letters) for _ in range(2000))
-        params.update(q=longQuery)
-        yield self.client._select(params)
-
-        defer.returnValue(None)
-
     def test_searchRequest(self):
-        return self.client.search("manuel")
+        return self.client.search('sample')
 
+
+class AddingDocumentsTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.client = SolrClient(SOLR_URL)
+
+    def test_addOneDocument(self):
+        pass
+
+    def test_addOneDocumentMultipleFields(self):
+        pass
+
+    def test_addManyDocuments(self):
+        pass
+
+    def test_addUnicodeDocument(self):
+        pass
+
+    def test_addDocumentWithNoneField(self):
+        pass
+
+    def test_addDocumentWithDatetime(self):
+        pass
+
+
+class UpdatingDocumentsTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.client = SolrClient(SOLR_URL)
+
+    def test_updateOneDocument(self):
+        pass
+
+    def test_updateManyDocuments(self):
+        pass
+
+
+class DeletingDocumentsTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.client = SolrClient(SOLR_URL)
+
+    def test_deleteOneDocumentByID(self):
+        pass
+
+    def test_deleteManyDocumentsByID(self):
+        pass
+
+    def test_deleteOneDocumentByQuery(self):
+        pass
+
+    def test_deleteManyDocumentsByQuery(self):
+        pass
+
+
+class QueryingDocumentsTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.client = SolrClient(SOLR_URL)
+        #Add documents here
+
+    def test_simpleQuery(self):
+        pass
+
+    def test_queryWithFields(self):
+        pass
+
+    def test_queryWithScore(self):
+        pass
+
+    def test_queryWithHighLight(self):
+        pass
+
+    def test_queryWithSort(self):
+        pass
+
+    def test_queryWithFacet(self):
+        pass
+
+    def tearDown(self):
+        # Remove documents here
+        pass
+
+
+class CommitingOptimizingTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.client = SolrClient(SOLR_URL)
+
+    def test_commit(self):
+        pass
+
+    def tests_optimize(self):
+        pass
