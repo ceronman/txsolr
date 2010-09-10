@@ -122,7 +122,8 @@ class AddingDocumentsTestCase(unittest.TestCase):
 
         r = yield self.client.search('name:%s' % name)
 
-        self.assertEqual(r.response.numFound, len(docs))
+        self.assertEqual(r.response.numFound, len(docs),
+                         'Document was not added')
 
         defer.returnValue(None)
 
@@ -246,17 +247,117 @@ class DeletingDocumentsTestCase(unittest.TestCase):
     def setUp(self):
         self.client = SolrClient(SOLR_URL)
 
+    @defer.inlineCallbacks
     def test_deleteOneDocumentByID(self):
-        pass
 
+        doc = {'id': _randomString(20),
+               'name': _randomString(20)}
+
+        # Fist add the document
+        yield self.client.add(doc)
+        yield self.client.commit()
+
+        # Next delete the document
+        yield self.client.delete(doc['id'])
+        yield self.client.commit()
+
+        r = yield self.client.search('id:%s' % doc['id'])
+
+        self.assertEqual(r.response.numFound, 0,
+                         "The document was not deleted")
+
+        r = yield self.client.search('name:%s' % doc['name'])
+
+        self.assertEqual(r.response.numFound, 0,
+                         "The document was not deleted")
+
+        defer.returnValue(None)
+
+    @defer.inlineCallbacks
     def test_deleteManyDocumentsByID(self):
-        pass
 
+        name = _randomString(20)
+
+        docs = []
+        for _ in range(5):
+            doc = {'id': _randomString(20),
+                   'name': name}
+            docs.append(doc)
+
+        # Add the documents
+        yield self.client.add(docs)
+        yield self.client.commit()
+
+        # Delete the documents
+        ids = [doc['id'] for doc in docs]
+        yield self.client.delete(ids)
+        yield self.client.commit()
+
+        r = yield self.client.search('name:%s' % name)
+        self.assertEqual(r.response.numFound, 0,
+                         'Document was not deleted')
+
+        for doc in docs:
+            r = yield self.client.search('id:%s' % doc['id'])
+            self.assertEqual(r.response.numFound, 0,
+                             'Document was not deleted')
+
+        defer.returnValue(None)
+
+    @defer.inlineCallbacks
     def test_deleteOneDocumentByQuery(self):
-        pass
+
+        doc = {'id': _randomString(20),
+               'name': _randomString(20)}
+
+        # Fist add the document
+        yield self.client.add(doc)
+        yield self.client.commit()
+
+        # Next delete the document
+        yield self.client.deleteByQuery('id:%s' % doc['id'])
+        yield self.client.commit()
+
+        r = yield self.client.search('id:%s' % doc['id'])
+
+        self.assertEqual(r.response.numFound, 0,
+                         "The document was not deleted")
+
+        r = yield self.client.search('name:%s' % doc['name'])
+
+        self.assertEqual(r.response.numFound, 0,
+                         "The document was not deleted")
+
+        defer.returnValue(None)
 
     def test_deleteManyDocumentsByQuery(self):
-        pass
+
+        name = _randomString(20)
+
+        docs = []
+        for _ in range(5):
+            doc = {'id': _randomString(20),
+                   'name': name}
+            docs.append(doc)
+
+        # Add the documents
+        yield self.client.add(docs)
+        yield self.client.commit()
+
+        # Delete the documents
+        yield self.client.deleteByQuery('name:%s' % name)
+        yield self.client.commit()
+
+        r = yield self.client.search('name:%s' % name)
+        self.assertEqual(r.response.numFound, 0,
+                         'Document was not deleted')
+
+        for doc in docs:
+            r = yield self.client.search('id:%s' % doc['id'])
+            self.assertEqual(r.response.numFound, 0,
+                             'Document was not deleted')
+
+        defer.returnValue(None)
 
 
 class QueryingDocumentsTestCase(unittest.TestCase):
@@ -294,6 +395,9 @@ class CommitingOptimizingTestCase(unittest.TestCase):
         self.client = SolrClient(SOLR_URL)
 
     def test_commit(self):
+        pass
+
+    def test_rollback(self):
         pass
 
     def tests_optimize(self):
