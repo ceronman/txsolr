@@ -378,6 +378,7 @@ class QueryingDocumentsTestCase(unittest.TestCase):
             {'id': self.narutoId,
              'title':  u'Naruto',
              'links': ['http://en.wikipedia.org/wiki/Naruto'],
+             'category': 'action comedy drama fantasy',
              'popularity': 10,
              'info_t': (u'Naruto (NARUTO—ナルト—?, romanized as NARUTO) '
                         u'is an ongoing Japanese manga series written '
@@ -390,6 +391,7 @@ class QueryingDocumentsTestCase(unittest.TestCase):
 
             {'id': self.bleachId,
              'title':  u'Bleach',
+             'category': 'action comedy drama supernatural',
              'links': ['http://en.wikipedia.org/wiki/Bleach_(manga)'],
              'popularity': 7,
              'info_t': (u'Bleach (ブリーチ Burīchi?, Romanized as BLEACH '
@@ -402,6 +404,7 @@ class QueryingDocumentsTestCase(unittest.TestCase):
 
              {'id': self.deathnoteId,
              'title':  u'Death Note',
+             'category': 'drama mystery psychological supernatural thriller',
              'links': ['http://en.wikipedia.org/wiki/Death_Note'],
              'popularity': 8,
              'info_t': (u'Death Note (デスノート Desu Nōto?) is a manga '
@@ -508,19 +511,21 @@ class QueryingDocumentsTestCase(unittest.TestCase):
 
         defer.returnValue(None)
 
+    @defer.inlineCallbacks
     def test_queryWithHighlight(self):
 
-        # Highlight info_t field
-#        r = yield self.client.search('info_t:manga',
-#                                     hl='true',
-#                                     hl_fl='info_t')
+        # TODO: poor test. Improve it
 
-#        pprint.pprint(r.rawResponse)
+        r = yield self.client.search('info_t:manga',
+                                     hl='true',
+                                     hl_fl='info_t')
 
         # FIXME: this tests shows a potential problem with response system
         #        response objects should be changed
 
-        self.fail('Response system should be reviewed')
+        self.assertTrue(hasattr(r, 'highlighting'))
+
+        defer.returnValue(None)
 
     @defer.inlineCallbacks
     def test_queryWithSort(self):
@@ -538,8 +543,33 @@ class QueryingDocumentsTestCase(unittest.TestCase):
 
         defer.returnValue(None)
 
+    @defer.inlineCallbacks
     def test_queryWithFacet(self):
-        pass
+
+        # TODO: poor test. Improve it
+
+        # field facet
+        r = yield self.client.search('info_t:manga',
+                                     facet = 'true',
+                                     facet_field = 'category')
+
+
+        category_facet = r.facet_counts.facet_fields.category
+
+        self.assertEqual(len(category_facet), 16, 'Unexpected facet')
+
+        # query facet
+        # FIXME: current api does not allow multiple facet queries or fields
+        r = yield self.client.search('info_t:manga',
+                                     facet = 'true',
+                                     facet_query = 'popularity:[0 TO 8]')
+
+        # FIXME: rawResponse should not be needed here
+        facet_queries = r.rawResponse['facet_counts']['facet_queries']
+
+        self.assertEqual(len(facet_queries), 1, 'Unexpected facet')
+
+        defer.returnValue(None)
 
     @defer.inlineCallbacks
     def tearDown(self):
