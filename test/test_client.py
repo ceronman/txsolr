@@ -1,6 +1,9 @@
+# -*- coding: utf-8 -*-
+
 import random
 import string
 import datetime
+import pprint
 
 #import logging
 #import sys
@@ -130,7 +133,7 @@ class AddingDocumentsTestCase(unittest.TestCase):
     @defer.inlineCallbacks
     def test_addUnicodeDocument(self):
         doc = {'id': _randomString(20),
-               'title': [unicode(_randomString(20))]}
+               'title': [u'カカシ外伝～戦場のボーイズライフ ☝☜']}
 
         yield self.client.add(doc)
         yield self.client.commit()
@@ -170,9 +173,9 @@ class AddingDocumentsTestCase(unittest.TestCase):
 
         r = yield self.client.search('id:%s' % doc['id'])
 
-        print r.rawResponse
-
         doc = r.response.docs[0]
+
+        # FIXME: dates proably should be parsed to datetime objects
 
         self.assertEqual(doc.test1_dt, u'2010-01-01T23:59:59Z',
                          'Datetime value does not match')
@@ -362,31 +365,190 @@ class DeletingDocumentsTestCase(unittest.TestCase):
 
 class QueryingDocumentsTestCase(unittest.TestCase):
 
+    @defer.inlineCallbacks
     def setUp(self):
         self.client = SolrClient(SOLR_URL)
-        #Add documents here
 
+        # Test documents used for querying
+        self.narutoId = _randomString(20)
+        self.bleachId = _randomString(20)
+        self.deathnoteId = _randomString(20)
+
+        self.documents = [
+            {'id': self.narutoId,
+             'title':  u'Naruto',
+             'links': ['http://en.wikipedia.org/wiki/Naruto'],
+             'popularity': 10,
+             'info_t': (u'Naruto (NARUTO—ナルト—?, romanized as NARUTO) '
+                        u'is an ongoing Japanese manga series written '
+                        u'and illustrated by Masashi Kishimoto. The '
+                        u'plot tells the story of Naruto Uzumaki, '
+                        u'an adolescent ninja who constantly searches '
+                        u'for recognition and aspires to become a Hokage, '
+                        u'the ninja in his village that is acknowledged '
+                        u'as the leader and the strongest of all.')},
+
+            {'id': self.bleachId,
+             'title':  u'Bleach',
+             'links': ['http://en.wikipedia.org/wiki/Bleach_(manga)'],
+             'popularity': 7,
+             'info_t': (u'Bleach (ブリーチ Burīchi?, Romanized as BLEACH '
+                        u'in Japan) is a Japanese manga series written '
+                        u'and illustrated by Tite Kubo. Bleach follows '
+                        u'the adventures of Ichigo Kurosaki after he '
+                        u'obtains the powers of a Soul Reaper - a death '
+                        u'personification similar to the Grim Reaper - '
+                        u'from Rukia Kuchiki.')},
+
+             {'id': self.deathnoteId,
+             'title':  u'Death Note',
+             'links': ['http://en.wikipedia.org/wiki/Death_Note'],
+             'popularity': 8,
+             'info_t': (u'Death Note (デスノート Desu Nōto?) is a manga '
+                        u'series created by writer Tsugumi Ohba and '
+                        u'manga artist Takeshi Obata. The main character '
+                        u'is Light Yagami, a high school student who '
+                        u'discovers a supernatural notebook, the "Death '
+                        u'Note", dropped on Earth by a death god '
+                        u'named Ryuk.')},
+        ]
+
+        yield self.client.add(self.documents)
+        yield self.client.commit()
+
+        defer.returnValue(None)
+
+    @defer.inlineCallbacks
     def test_simpleQuery(self):
-        pass
 
+        r = yield self.client.search('title:Bleach OR title:"Death Note"')
+
+        self.assertEqual(r.response.numFound, 2,
+                         'Wrong numFound after query')
+
+        for doc in r.response.docs:
+            self.assertTrue(doc.id in (self.bleachId, self.deathnoteId),
+                            'Document found does not match with added one')
+
+        defer.returnValue(None)
+
+    @defer.inlineCallbacks
+    def test_unicodeQuery(self):
+
+        r = yield self.client.search(u'info_t:ブリーチ') # Bleach in Japanese
+
+        self.assertEqual(r.response.numFound, 1,
+                         'Wrong numFound after query')
+
+        doc = r.response.docs[0]
+        self.assertEqual(doc.id, self.bleachId,
+                        'Document found does not match with added one')
+
+        defer.returnValue(None)
+
+    @defer.inlineCallbacks
     def test_queryWithFields(self):
-        pass
 
+        # Fist test query with a single field
+        r = yield self.client.search('info_t:manga', fl='links')
+        for doc in r.response.docs:
+            self.assertTrue(hasattr(doc, 'links'),
+                           'Results do not have specified field')
+
+            self.assertFalse(hasattr(doc, 'id'),
+                             'Results have unrequested fields')
+
+            self.assertFalse(hasattr(doc, 'info_t'),
+                             'Results have unrequested fields')
+
+            self.assertFalse(hasattr(doc, 'popularity'),
+                             'Results have unrequested fields')
+
+        # Test query with multiple fields
+        r = yield self.client.search('info_t:manga', fl='links,popularity')
+        for doc in r.response.docs:
+            self.assertTrue(hasattr(doc, 'links'),
+                           'Results do not have specified field')
+
+            self.assertFalse(hasattr(doc, 'id'),
+                             'Results have unrequested fields')
+
+            self.assertFalse(hasattr(doc, 'info_t'),
+                             'Results have unrequested fields')
+
+            self.assertTrue(hasattr(doc, 'popularity'),
+                             'Results do not have specified field')
+
+        # Test query with all fields
+        r = yield self.client.search('info_t:manga', fl='*')
+        for doc in r.response.docs:
+            self.assertTrue(hasattr(doc, 'links'),
+                            'Results do not have specified field')
+
+            self.assertTrue(hasattr(doc, 'id'),
+                            'Results do not have specified field')
+
+            self.assertTrue(hasattr(doc, 'info_t'),
+                            'Results do not have specified field')
+
+            self.assertTrue(hasattr(doc, 'popularity'),
+                            'Results do not have specified field')
+
+        defer.returnValue(None)
+
+    @defer.inlineCallbacks
     def test_queryWithScore(self):
-        pass
+        r = yield self.client.search('info_t:manga', fl='id,score')
+        for doc in r.response.docs:
+            self.assertTrue(hasattr(doc, 'id'),
+                           'Results do not have ID field')
 
-    def test_queryWithHighLight(self):
-        pass
+            self.assertTrue(hasattr(doc, 'score'),
+                           'Results do not have score')
 
+        defer.returnValue(None)
+
+    def test_queryWithHighlight(self):
+
+        # Highlight info_t field
+#        r = yield self.client.search('info_t:manga',
+#                                     hl='true',
+#                                     hl_fl='info_t')
+
+#        pprint.pprint(r.rawResponse)
+
+        # FIXME: this tests shows a potential problem with response system
+        #        response objects should be changed
+
+        self.fail('Response system should be reviewed')
+
+    @defer.inlineCallbacks
     def test_queryWithSort(self):
-        pass
+        r = yield self.client.search('info_t:manga', sort='popularity desc')
+        docs = r.response.docs
+
+        self.assertEqual(docs[0].id, self.narutoId,
+                         'Wrong sorting order')
+
+        self.assertEqual(docs[1].id, self.deathnoteId,
+                         'Wrong sorting order')
+
+        self.assertEqual(docs[2].id, self.bleachId,
+                         'Wrong sorting order')
+
+        defer.returnValue(None)
 
     def test_queryWithFacet(self):
         pass
 
+    @defer.inlineCallbacks
     def tearDown(self):
-        # Remove documents here
-        pass
+        ids = [doc['id'] for doc in self.documents]
+
+        yield self.client.delete(ids)
+        yield self.client.commit()
+
+        defer.returnValue(None)
 
 
 class CommitingOptimizingTestCase(unittest.TestCase):
