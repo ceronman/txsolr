@@ -1,5 +1,10 @@
 import random
 import string
+import datetime
+
+#import logging
+#import sys
+#logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 from twisted.trial import unittest
 from twisted.internet import defer
@@ -19,23 +24,12 @@ class ConnectionTestCase(unittest.TestCase):
     def test_requestPing(self):
         return self.client.ping()
 
+    @defer.inlineCallbacks
     def test_requestStatus(self):
-        result = defer.Deferred()
-
-        d = self.client._request('GET', '', {}, None)
-
-        def cb(response):
-            result.errback('Request should fail')
-        d.addCallback(cb)
-
-        def er(failure):
-            if isinstance(failure.value, WrongHTTPStatus):
-                result.callback(None)
-            else:
-                result.errback('Got wrong failure')
-        d.addErrback(er)
-
-        return result
+        try:
+            yield self.client._request('HEAD', '', {}, None)
+        except WrongHTTPStatus:
+            pass
 
     def test_addRequest(self):
         return self.client.add(dict(id=1))
@@ -58,29 +52,134 @@ class ConnectionTestCase(unittest.TestCase):
     def test_searchRequest(self):
         return self.client.search('sample')
 
+def _randomString(size):
+
+    return ''.join(random.choice(string.letters) for _ in range(size))
 
 class AddingDocumentsTestCase(unittest.TestCase):
 
     def setUp(self):
         self.client = SolrClient(SOLR_URL)
 
+    @defer.inlineCallbacks
     def test_addOneDocument(self):
-        pass
 
+        doc = {'id': _randomString(20)}
+
+        yield self.client.add(doc)
+        yield self.client.commit()
+
+        r = yield self.client.search('id:%s' % doc['id'])
+
+        self.assertEqual(r.response.numFound, 1,
+                         "Added document not found in the index")
+
+        self.assertEqual(r.response.docs[0].id, doc['id'],
+                         "Found ID does not match with added document")
+
+        defer.returnValue(None)
+
+    @defer.inlineCallbacks
     def test_addOneDocumentMultipleFields(self):
-        pass
 
+        name = _randomString(20)
+        links = [_randomString(20) for _ in range(5)]
+
+        for seq in (list, tuple, set):
+            doc = {'id': _randomString(20),
+                   'name': name,
+                   'title': _randomString(20),
+                   'links': seq(links)}
+
+            yield self.client.add(doc)
+
+        yield self.client.commit()
+
+        r = yield self.client.search('name:%s' % name)
+
+        self.assertEqual(r.response.numFound, 3,
+                         "Did not get expected results")
+
+        for doc in r.response.docs:
+            self.assertTrue(doc.links, links)
+
+        defer.returnValue(None)
+
+    @defer.inlineCallbacks
     def test_addManyDocuments(self):
-        pass
 
+        name = _randomString(20)
+        LENGTH = 5
+
+        docs = []
+        for _ in range(LENGTH):
+            doc = {'id': _randomString(20),
+                   'name': name,
+                   'title': [_randomString(20)]}
+            docs.append(doc)
+
+        yield self.client.add(docs)
+        yield self.client.commit()
+
+        r = yield self.client.search('name:%s' % name)
+
+        self.assertEqual(r.response.numFound, LENGTH)
+
+        defer.returnValue(None)
+
+    @defer.inlineCallbacks
     def test_addUnicodeDocument(self):
-        pass
+        doc = {'id': _randomString(20),
+               'title': [unicode(_randomString(20))]}
 
+        yield self.client.add(doc)
+        yield self.client.commit()
+
+        r = yield self.client.search('id:%s' % doc['id'])
+
+        self.assertEqual(r.response.docs[0].title, doc['title'],
+                         "Unicode value does not match with found document")
+
+        defer.returnValue(None)
+
+    @defer.inlineCallbacks
     def test_addDocumentWithNoneField(self):
-        pass
+        doc = {'id': _randomString(20),
+               'title': None}
 
+        yield self.client.add(doc)
+        yield self.client.commit()
+
+        r = yield self.client.search('id:%s' % doc['id'])
+
+        self.assertRaises(AttributeError, getattr, r.response.docs[0], 'title')
+
+        defer.returnValue(None)
+
+    @defer.inlineCallbacks
     def test_addDocumentWithDatetime(self):
-        pass
+
+        # NOTE: Microseconds are ignored by Solr
+
+        doc = {'id': _randomString(20),
+               'test1_dt': datetime.datetime(2010, 1, 1, 23, 59, 59, 999),
+               'test2_dt': datetime.date(2010, 1, 1)}
+
+        yield self.client.add(doc)
+        yield self.client.commit()
+
+        r = yield self.client.search('id:%s' % doc['id'])
+
+        print r.rawResponse
+
+        doc = r.response.docs[0]
+
+        self.assertEqual(doc.test1_dt, u'2010-01-01T23:59:59Z',
+                         'Datetime value does not match')
+        self.assertEqual(doc.test2_dt, u'2010-01-01T00:00:00Z',
+                         'Date value does not match')
+
+        defer.returnValue(None)
 
 
 class UpdatingDocumentsTestCase(unittest.TestCase):
