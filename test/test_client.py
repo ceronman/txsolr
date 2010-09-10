@@ -109,10 +109,9 @@ class AddingDocumentsTestCase(unittest.TestCase):
     def test_addManyDocuments(self):
 
         name = _randomString(20)
-        LENGTH = 5
 
         docs = []
-        for _ in range(LENGTH):
+        for _ in range(5):
             doc = {'id': _randomString(20),
                    'name': name,
                    'title': [_randomString(20)]}
@@ -123,7 +122,7 @@ class AddingDocumentsTestCase(unittest.TestCase):
 
         r = yield self.client.search('name:%s' % name)
 
-        self.assertEqual(r.response.numFound, LENGTH)
+        self.assertEqual(r.response.numFound, len(docs))
 
         defer.returnValue(None)
 
@@ -187,11 +186,59 @@ class UpdatingDocumentsTestCase(unittest.TestCase):
     def setUp(self):
         self.client = SolrClient(SOLR_URL)
 
+    @defer.inlineCallbacks
     def test_updateOneDocument(self):
-        pass
+        data = _randomString(20)
+        updated_data = _randomString(20)
 
+        doc = {'id': _randomString(20),
+               'test_s': data}
+
+        # add initial data
+        yield self.client.add(doc)
+        yield self.client.commit()
+
+
+        # update data
+        doc['test_s'] = updated_data
+        yield self.client.add(doc)
+        yield self.client.commit()
+
+        r = yield self.client.search('id:%s' % doc['id'])
+        self.assertEqual(r.response.docs[0].test_s, updated_data,
+                         'Update did not work')
+
+        defer.returnValue(None)
+
+    @defer.inlineCallbacks
     def test_updateManyDocuments(self):
-        pass
+
+        data = _randomString(20)
+        updated_data = _randomString(20)
+
+        docs = []
+        for _ in range(5):
+            doc = {'id': _randomString(20),
+                   'test_s': data }
+            docs.append(doc)
+
+        # add initial data
+        yield self.client.add(docs)
+        yield self.client.commit()
+
+        # update data
+        for doc in docs:
+            doc['test_s'] = updated_data
+
+        yield self.client.add(docs)
+        yield self.client.commit()
+
+        for doc in docs:
+            r = yield self.client.search('id:%s' % doc['id'])
+            self.assertEqual(r.response.docs[0].test_s, updated_data,
+                             'Multiple update did not work')
+
+        defer.returnValue(None)
 
 
 class DeletingDocumentsTestCase(unittest.TestCase):
