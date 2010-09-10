@@ -136,8 +136,10 @@ class SolrClient(object):
         return self._request(method, path, headers, None)
 
 if __name__ == '__main__':
-    import sys
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+#    import sys
+#    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+    import txsolr
+    txsolr.logToStderr()
     c = SolrClient('http://localhost:8983/solr/')
     document = {'id': 1, 'text': 'manuel tres', 'name': 'tres'}
 #    d = c.add([document])

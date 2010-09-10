@@ -3,11 +3,6 @@
 import random
 import string
 import datetime
-import pprint
-
-#import logging
-#import sys
-#logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 from twisted.trial import unittest
 from twisted.internet import defer
@@ -17,7 +12,6 @@ from txsolr.errors import WrongHTTPStatus
 
 # FIXME: avoid hardcoded url
 SOLR_URL = 'http://localhost:8983/solr/'
-
 
 class ConnectionTestCase(unittest.TestCase):
 

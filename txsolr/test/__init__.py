@@ -1,0 +1,2 @@
+#import txsolr
+#txsolr.logToStderr()
