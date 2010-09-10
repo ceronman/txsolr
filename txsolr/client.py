@@ -68,6 +68,7 @@ class SolrClient(object):
         method = 'POST'
         path = '/update?wt=json'
         headers = { 'Content-Type': [self.inputFactory.contentType] }
+        _logger.debug('Updating:\n%s' % input.body)
         return self._request(method, path, headers, input)
 
     def _select(self, params):
@@ -100,7 +101,7 @@ class SolrClient(object):
         return self._update(input)
 
     def deleteByQuery(self, query):
-        input = self.inputFactory.createDelete(query)
+        input = self.inputFactory.createDeleteByQuery(query)
         return self._update(input)
 
     # TODO: add parameters
@@ -140,6 +141,7 @@ if __name__ == '__main__':
 #    d = c.delete(1000)
 #    d = c._select({'q': 'manuel'.encode('UTF-8'), 'indent': 'true'})
 #    d = c.search('manuel')
+#    d = c.deleteByQuery('*:*')
 
     def cb(content):
         print 'Delivery:'
