@@ -581,16 +581,64 @@ class QueryingDocumentsTestCase(unittest.TestCase):
         defer.returnValue(None)
 
 
-class CommitingOptimizingTestCase(unittest.TestCase):
+class CommitingTestCase(unittest.TestCase):
 
     def setUp(self):
         self.client = SolrClient(SOLR_URL)
 
+    @defer.inlineCallbacks
     def test_commit(self):
-        pass
+        doc = {'id': _randomString(20)}
 
+        yield self.client.add(doc)
+
+        r = yield self.client.search('id:%s' % doc['id'])
+
+        self.assertEqual(r.response.numFound, 0,
+                         'Document addition was commited')
+
+        yield self.client.commit()
+
+        r = yield self.client.search('id:%s' % doc['id'])
+
+        self.assertEqual(r.response.numFound, 1,
+                         'Commit did not work')
+
+        defer.returnValue(None)
+
+    @defer.inlineCallbacks
     def test_rollback(self):
-        pass
 
+        doc = {'id': _randomString(20)}
+
+        yield self.client.add(doc)
+        yield self.client.rollback()
+        yield self.client.commit()
+
+        r = yield self.client.search('id:%s' % doc['id'])
+
+        self.assertEqual(r.response.numFound, 0,
+                         'Rollback did not work')
+
+        defer.returnValue(None)
+
+    @defer.inlineCallbacks
     def tests_optimize(self):
-        pass
+
+        doc = {'id': _randomString(20)}
+
+        yield self.client.add(doc)
+
+        r = yield self.client.search('id:%s' % doc['id'])
+
+        self.assertEqual(r.response.numFound, 0,
+                         'Document addition was commited')
+
+        yield self.client.optimize()
+
+        r = yield self.client.search('id:%s' % doc['id'])
+
+        self.assertEqual(r.response.numFound, 1,
+                         'Optimize did not work')
+
+        defer.returnValue(None)
