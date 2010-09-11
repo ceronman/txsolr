@@ -44,30 +44,12 @@ class EmptyResponseConsumer(Protocol):
         self.transport.stopProducing()
 
 
-def _updateFromDict(obj, dict_):
-    """
-    Updates and object using a dictionary recursively
-    """
+class QueryResults(object):
 
-    assert isinstance(dict_, dict)
-
-    def convertValue(name, value):
-        if isinstance(value, dict):
-            obj = type(str(name) + 'Object', (object,), {})
-            _updateFromDict(obj, value)
-            return obj
-
-        if isinstance(value, (list, tuple)):
-            obj = [convertValue(str(name) + 'Item', i)
-                   for i in value]
-            return obj
-
-        return value
-
-    for key, value in dict_.iteritems():
-        assert isinstance(key, basestring)
-
-        setattr(obj, str(key), convertValue(key, value))
+    def __init__(self, numFound, start, docs):
+        self.numFound = numFound
+        self.start = start
+        self.docs = docs
 
 
 class SolrResponse(object):
@@ -77,21 +59,42 @@ class SolrResponse(object):
     def __init__(self, response):
         assert self.decoder is not None
 
-        self.rawResponse = self._decodeResponse(response)
+        self.responseDict = None
+        self.header = None
+        self.results = None
+
+        self.responseDict = self._decodeResponse(response)
         self._update()
 
     def _update(self):
-        _updateFromDict(self, self.rawResponse)
 
-        try:
-            status = self.responseHeader.status
-        except AttributeError:
-            msg = 'Status code not found in:\n%s' % self.rawResponse
-            raise SolrResponseError(msg)
+        response = self.responseDict
 
-        if status != 0:
-            msg = 'Invalid status code:\n%s' % self.rawResponse
-            raise SolrResponseError(msg)
+        if not 'responseHeader' in response:
+            raise SolrResponseError('Response does not have header')
+
+        self.header = response['responseHeader']
+
+        if not 'status' in self.header:
+            raise SolrResponseError('Response does not have status')
+
+        if self.header['status'] != 0:
+            raise SolrResponseError('Response status != 0')
+
+        if 'response' in response:
+            try:
+                self.results = QueryResults(response['response']['numFound'],
+                                       response['response']['start'],
+                                       response['response']['docs'])
+            except KeyError:
+                raise SolrResponseError('Wrong results')
+
+        for key, value in response.iteritems():
+            if key in ('response', 'responseHeader'):
+                continue
+
+            setattr(self, key, value)
+
 
     def _decodeResponse(self, response):
         try:

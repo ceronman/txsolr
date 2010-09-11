@@ -68,10 +68,10 @@ class AddingDocumentsTestCase(unittest.TestCase):
 
         r = yield self.client.search('id:%s' % doc['id'])
 
-        self.assertEqual(r.response.numFound, 1,
+        self.assertEqual(r.results.numFound, 1,
                          "Added document not found in the index")
 
-        self.assertEqual(r.response.docs[0].id, doc['id'],
+        self.assertEqual(r.results.docs[0]['id'], doc['id'],
                          "Found ID does not match with added document")
 
         defer.returnValue(None)
@@ -94,11 +94,11 @@ class AddingDocumentsTestCase(unittest.TestCase):
 
         r = yield self.client.search('name:%s' % name)
 
-        self.assertEqual(r.response.numFound, 3,
+        self.assertEqual(r.results.numFound, 3,
                          "Did not get expected results")
 
-        for doc in r.response.docs:
-            self.assertTrue(doc.links, links)
+        for doc in r.results.docs:
+            self.assertTrue(doc['links'], links)
 
         defer.returnValue(None)
 
@@ -119,7 +119,7 @@ class AddingDocumentsTestCase(unittest.TestCase):
 
         r = yield self.client.search('name:%s' % name)
 
-        self.assertEqual(r.response.numFound, len(docs),
+        self.assertEqual(r.results.numFound, len(docs),
                          'Document was not added')
 
         defer.returnValue(None)
@@ -134,7 +134,7 @@ class AddingDocumentsTestCase(unittest.TestCase):
 
         r = yield self.client.search('id:%s' % doc['id'])
 
-        self.assertEqual(r.response.docs[0].title, doc['title'],
+        self.assertEqual(r.results.docs[0]['title'], doc['title'],
                          "Unicode value does not match with found document")
 
         defer.returnValue(None)
@@ -149,7 +149,7 @@ class AddingDocumentsTestCase(unittest.TestCase):
 
         r = yield self.client.search('id:%s' % doc['id'])
 
-        self.assertRaises(AttributeError, getattr, r.response.docs[0], 'title')
+        self.assertFalse('title' in r.results.docs[0])
 
         defer.returnValue(None)
 
@@ -167,13 +167,13 @@ class AddingDocumentsTestCase(unittest.TestCase):
 
         r = yield self.client.search('id:%s' % doc['id'])
 
-        doc = r.response.docs[0]
+        doc = r.results.docs[0]
 
         # FIXME: dates proably should be parsed to datetime objects
 
-        self.assertEqual(doc.test1_dt, u'2010-01-01T23:59:59Z',
+        self.assertEqual(doc['test1_dt'], u'2010-01-01T23:59:59Z',
                          'Datetime value does not match')
-        self.assertEqual(doc.test2_dt, u'2010-01-01T00:00:00Z',
+        self.assertEqual(doc['test2_dt'], u'2010-01-01T00:00:00Z',
                          'Date value does not match')
 
         defer.returnValue(None)
@@ -203,7 +203,7 @@ class UpdatingDocumentsTestCase(unittest.TestCase):
         yield self.client.commit()
 
         r = yield self.client.search('id:%s' % doc['id'])
-        self.assertEqual(r.response.docs[0].test_s, updated_data,
+        self.assertEqual(r.results.docs[0]['test_s'], updated_data,
                          'Update did not work')
 
         defer.returnValue(None)
@@ -233,7 +233,7 @@ class UpdatingDocumentsTestCase(unittest.TestCase):
 
         for doc in docs:
             r = yield self.client.search('id:%s' % doc['id'])
-            self.assertEqual(r.response.docs[0].test_s, updated_data,
+            self.assertEqual(r.results.docs[0]['test_s'], updated_data,
                              'Multiple update did not work')
 
         defer.returnValue(None)
@@ -260,12 +260,12 @@ class DeletingDocumentsTestCase(unittest.TestCase):
 
         r = yield self.client.search('id:%s' % doc['id'])
 
-        self.assertEqual(r.response.numFound, 0,
+        self.assertEqual(r.results.numFound, 0,
                          "The document was not deleted")
 
         r = yield self.client.search('name:%s' % doc['name'])
 
-        self.assertEqual(r.response.numFound, 0,
+        self.assertEqual(r.results.numFound, 0,
                          "The document was not deleted")
 
         defer.returnValue(None)
@@ -291,12 +291,12 @@ class DeletingDocumentsTestCase(unittest.TestCase):
         yield self.client.commit()
 
         r = yield self.client.search('name:%s' % name)
-        self.assertEqual(r.response.numFound, 0,
+        self.assertEqual(r.results.numFound, 0,
                          'Document was not deleted')
 
         for doc in docs:
             r = yield self.client.search('id:%s' % doc['id'])
-            self.assertEqual(r.response.numFound, 0,
+            self.assertEqual(r.results.numFound, 0,
                              'Document was not deleted')
 
         defer.returnValue(None)
@@ -317,12 +317,12 @@ class DeletingDocumentsTestCase(unittest.TestCase):
 
         r = yield self.client.search('id:%s' % doc['id'])
 
-        self.assertEqual(r.response.numFound, 0,
+        self.assertEqual(r.results.numFound, 0,
                          "The document was not deleted")
 
         r = yield self.client.search('name:%s' % doc['name'])
 
-        self.assertEqual(r.response.numFound, 0,
+        self.assertEqual(r.results.numFound, 0,
                          "The document was not deleted")
 
         defer.returnValue(None)
@@ -346,12 +346,12 @@ class DeletingDocumentsTestCase(unittest.TestCase):
         yield self.client.commit()
 
         r = yield self.client.search('name:%s' % name)
-        self.assertEqual(r.response.numFound, 0,
+        self.assertEqual(r.results.numFound, 0,
                          'Document was not deleted')
 
         for doc in docs:
             r = yield self.client.search('id:%s' % doc['id'])
-            self.assertEqual(r.response.numFound, 0,
+            self.assertEqual(r.results.numFound, 0,
                              'Document was not deleted')
 
         defer.returnValue(None)
@@ -420,11 +420,11 @@ class QueryingDocumentsTestCase(unittest.TestCase):
 
         r = yield self.client.search('title:Bleach OR title:"Death Note"')
 
-        self.assertEqual(r.response.numFound, 2,
+        self.assertEqual(r.results.numFound, 2,
                          'Wrong numFound after query')
 
-        for doc in r.response.docs:
-            self.assertTrue(doc.id in (self.bleachId, self.deathnoteId),
+        for doc in r.results.docs:
+            self.assertTrue(doc['id'] in (self.bleachId, self.deathnoteId),
                             'Document found does not match with added one')
 
         defer.returnValue(None)
@@ -434,11 +434,11 @@ class QueryingDocumentsTestCase(unittest.TestCase):
 
         r = yield self.client.search(u'info_t:ブリーチ') # Bleach in Japanese
 
-        self.assertEqual(r.response.numFound, 1,
+        self.assertEqual(r.results.numFound, 1,
                          'Wrong numFound after query')
 
-        doc = r.response.docs[0]
-        self.assertEqual(doc.id, self.bleachId,
+        doc = r.results.docs[0]
+        self.assertEqual(doc['id'], self.bleachId,
                         'Document found does not match with added one')
 
         defer.returnValue(None)
@@ -448,47 +448,47 @@ class QueryingDocumentsTestCase(unittest.TestCase):
 
         # Fist test query with a single field
         r = yield self.client.search('info_t:manga', fl='links')
-        for doc in r.response.docs:
-            self.assertTrue(hasattr(doc, 'links'),
+        for doc in r.results.docs:
+            self.assertTrue('links' in doc,
                            'Results do not have specified field')
 
-            self.assertFalse(hasattr(doc, 'id'),
+            self.assertFalse('id' in doc,
                              'Results have unrequested fields')
 
-            self.assertFalse(hasattr(doc, 'info_t'),
+            self.assertFalse('info_t' in doc,
                              'Results have unrequested fields')
 
-            self.assertFalse(hasattr(doc, 'popularity'),
+            self.assertFalse('popularity' in doc,
                              'Results have unrequested fields')
 
         # Test query with multiple fields
         r = yield self.client.search('info_t:manga', fl='links,popularity')
-        for doc in r.response.docs:
-            self.assertTrue(hasattr(doc, 'links'),
+        for doc in r.results.docs:
+            self.assertTrue('links' in doc,
                            'Results do not have specified field')
 
-            self.assertFalse(hasattr(doc, 'id'),
+            self.assertFalse('id' in doc,
                              'Results have unrequested fields')
 
-            self.assertFalse(hasattr(doc, 'info_t'),
+            self.assertFalse('info_t' in doc,
                              'Results have unrequested fields')
 
-            self.assertTrue(hasattr(doc, 'popularity'),
+            self.assertTrue('popularity' in doc,
                              'Results do not have specified field')
 
         # Test query with all fields
         r = yield self.client.search('info_t:manga', fl='*')
-        for doc in r.response.docs:
-            self.assertTrue(hasattr(doc, 'links'),
+        for doc in r.results.docs:
+            self.assertTrue('links' in doc,
                             'Results do not have specified field')
 
-            self.assertTrue(hasattr(doc, 'id'),
+            self.assertTrue('id' in doc,
                             'Results do not have specified field')
 
-            self.assertTrue(hasattr(doc, 'info_t'),
+            self.assertTrue('info_t' in doc,
                             'Results do not have specified field')
 
-            self.assertTrue(hasattr(doc, 'popularity'),
+            self.assertTrue('popularity' in doc,
                             'Results do not have specified field')
 
         defer.returnValue(None)
@@ -496,11 +496,11 @@ class QueryingDocumentsTestCase(unittest.TestCase):
     @defer.inlineCallbacks
     def test_queryWithScore(self):
         r = yield self.client.search('info_t:manga', fl='id,score')
-        for doc in r.response.docs:
-            self.assertTrue(hasattr(doc, 'id'),
+        for doc in r.results.docs:
+            self.assertTrue('id' in doc,
                            'Results do not have ID field')
 
-            self.assertTrue(hasattr(doc, 'score'),
+            self.assertTrue('score' in doc,
                            'Results do not have score')
 
         defer.returnValue(None)
@@ -524,15 +524,15 @@ class QueryingDocumentsTestCase(unittest.TestCase):
     @defer.inlineCallbacks
     def test_queryWithSort(self):
         r = yield self.client.search('info_t:manga', sort='popularity desc')
-        docs = r.response.docs
+        docs = r.results.docs
 
-        self.assertEqual(docs[0].id, self.narutoId,
+        self.assertEqual(docs[0]['id'], self.narutoId,
                          'Wrong sorting order')
 
-        self.assertEqual(docs[1].id, self.deathnoteId,
+        self.assertEqual(docs[1]['id'], self.deathnoteId,
                          'Wrong sorting order')
 
-        self.assertEqual(docs[2].id, self.bleachId,
+        self.assertEqual(docs[2]['id'], self.bleachId,
                          'Wrong sorting order')
 
         defer.returnValue(None)
@@ -548,7 +548,7 @@ class QueryingDocumentsTestCase(unittest.TestCase):
                                      facet_field = 'category')
 
 
-        category_facet = r.facet_counts.facet_fields.category
+        category_facet = r.facet_counts['facet_fields']['category']
 
         self.assertEqual(len(category_facet), 16, 'Unexpected facet')
 
@@ -559,7 +559,7 @@ class QueryingDocumentsTestCase(unittest.TestCase):
                                      facet_query = 'popularity:[0 TO 8]')
 
         # FIXME: rawResponse should not be needed here
-        facet_queries = r.rawResponse['facet_counts']['facet_queries']
+        facet_queries = r.facet_counts['facet_queries']
 
         self.assertEqual(len(facet_queries), 1, 'Unexpected facet')
 
@@ -588,14 +588,14 @@ class CommitingTestCase(unittest.TestCase):
 
         r = yield self.client.search('id:%s' % doc['id'])
 
-        self.assertEqual(r.response.numFound, 0,
+        self.assertEqual(r.results.numFound, 0,
                          'Document addition was commited')
 
         yield self.client.commit()
 
         r = yield self.client.search('id:%s' % doc['id'])
 
-        self.assertEqual(r.response.numFound, 1,
+        self.assertEqual(r.results.numFound, 1,
                          'Commit did not work')
 
         defer.returnValue(None)
@@ -611,7 +611,7 @@ class CommitingTestCase(unittest.TestCase):
 
         r = yield self.client.search('id:%s' % doc['id'])
 
-        self.assertEqual(r.response.numFound, 0,
+        self.assertEqual(r.results.numFound, 0,
                          'Rollback did not work')
 
         defer.returnValue(None)
@@ -625,14 +625,14 @@ class CommitingTestCase(unittest.TestCase):
 
         r = yield self.client.search('id:%s' % doc['id'])
 
-        self.assertEqual(r.response.numFound, 0,
+        self.assertEqual(r.results.numFound, 0,
                          'Document addition was commited')
 
         yield self.client.optimize()
 
         r = yield self.client.search('id:%s' % doc['id'])
 
-        self.assertEqual(r.response.numFound, 1,
+        self.assertEqual(r.results.numFound, 1,
                          'Optimize did not work')
 
         defer.returnValue(None)
