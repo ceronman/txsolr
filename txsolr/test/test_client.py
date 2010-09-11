@@ -514,9 +514,6 @@ class QueryingDocumentsTestCase(unittest.TestCase):
                                      hl='true',
                                      hl_fl='info_t')
 
-        # FIXME: this tests shows a potential problem with response system
-        #        response objects should be changed
-
         self.assertTrue(hasattr(r, 'highlighting'))
 
         defer.returnValue(None)
@@ -558,7 +555,6 @@ class QueryingDocumentsTestCase(unittest.TestCase):
                                      facet = 'true',
                                      facet_query = 'popularity:[0 TO 8]')
 
-        # FIXME: rawResponse should not be needed here
         facet_queries = r.facet_counts['facet_queries']
 
         self.assertEqual(len(facet_queries), 1, 'Unexpected facet')
