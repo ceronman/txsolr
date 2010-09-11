@@ -20,8 +20,6 @@ class ResponseTest(unittest.TestCase):
 
         r = JSONSolrResponse(raw)
 
-        print r.responseDict
-
         self.assertEqual(r.header['status'], 0)
         self.assertEqual(r.header['QTime'], 2)
         self.assertEqual(r.results.numFound, 0)
