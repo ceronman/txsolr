@@ -120,6 +120,28 @@ class XMLInputTest(unittest.TestCase):
         expected = '<commit expungeDeletes="true" />'
         self.assertEqual(input, expected)
 
+    def test_optimize(self):
+        input = self.input.createOptimize().body
+        expected = '<optimize />'
+        self.assertEqual(input, expected)
+
+    def test_optimizeWaitFlush(self):
+        input = self.input.createOptimize(waitFlush=True).body
+        expected = '<optimize waitFlush="true" />'
+        self.assertEqual(input, expected)
+
+    def test_optimizeWaitSearcher(self):
+        input = self.input.createOptimize(waitSearcher=True).body
+        expected = '<optimize waitSearcher="true" />'
+        self.assertEqual(input, expected)
+
+    def test_optimizeMaxSegments(self):
+        input = self.input.createOptimize(maxSegments=2).body
+        expected = '<optimize maxSegments="2" />'
+        self.assertEqual(input, expected)
+
+
+
 
 
 

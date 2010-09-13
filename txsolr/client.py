@@ -107,20 +107,20 @@ class SolrClient(object):
         input = self.inputFactory.createDeleteByQuery(query)
         return self._update(input)
 
-    # TODO: add parameters
     def commit(self, waitFlush=None, waitSearcher=None, expungeDeletes=None):
         input = self.inputFactory.createCommit(waitFlush,
                                                waitSearcher,
-                                               waitSearcher)
+                                               expungeDeletes)
         return self._update(input)
 
     def rollback(self):
         input = self.inputFactory.createRollback()
         return self._update(input)
 
-    # TODO: add parameters
-    def optimize(self):
-        input = self.inputFactory.createOptimize()
+    def optimize(self, waitFlush=None, waitSearcher=None, maxSegments=None):
+        input = self.inputFactory.createOptimize(waitFlush,
+                                                 waitSearcher,
+                                                 maxSegments)
         return self._update(input)
 
     def search(self, query, **kwargs):

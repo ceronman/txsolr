@@ -126,6 +126,7 @@ class SimpleXMLInputFactory(object):
     def createCommit(self, waitFlush=None,
                            waitSearcher=None,
                            expungeDeletes=None):
+
         commitElement = ElementTree.Element('commit')
 
         if waitFlush is not None:
@@ -148,7 +149,23 @@ class SimpleXMLInputFactory(object):
         result = ElementTree.tostring(rollbackElement)
         return StringProducer(result)
 
-    def createOptimize(self):
+    def createOptimize(self, waitFlush=None,
+                             waitSearcher=None,
+                             maxSegments=None):
+
         optimizeElement = ElementTree.Element('optimize')
+
+        if waitFlush is not None:
+            waitFlush = 'true' if waitFlush else 'false'
+            optimizeElement.set('waitFlush', waitFlush)
+
+        if waitSearcher is not None:
+            waitSearcher = 'true' if waitSearcher else 'false'
+            optimizeElement.set('waitSearcher', waitSearcher)
+
+        if maxSegments is not None:
+            maxSegments = str(maxSegments)
+            optimizeElement.set('maxSegments', maxSegments)
+
         result = ElementTree.tostring(optimizeElement)
         return StringProducer(result)
