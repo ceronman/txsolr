@@ -16,7 +16,12 @@
 # limitations under the License.
 
 """
-Solr Client for Twisted
+txSolr is a Python client for the Solr Enterprise Search Server. It has been
+designed to be used with the twisted Asynchronous networking library.
+
+txSolr can be used to add, update, delete and query documents in a Solr
+instance. All operations return Twisted's deferreds for asynchronouns
+programming
 """
 
 import logging
@@ -41,16 +46,21 @@ _logger = logging.getLogger('txsolr')
 # TODO: decouple from JSON
 class SolrClient(object):
     """
-    A Solr Client. Used to make requests to a Solr Server
+    Solr client class used to perform requests to a Solr instance.
+
+    The client can use different input and output methods using Twisted
+    IProducer and IConsumer.
     """
 
     def __init__(self, url, inputFactory=None):
         """
         Creates the Solr Client object
 
-        @param url: the url of the Solr server
-        @param inputFactory: a class that is going to produce the input for the
-                             server, by default uses a simple input creator
+        @param url: The URL of the Solr server
+
+        @param inputFactory: The input body generator. For advanced uses
+        this argument could be used to create custom body generators for
+        the requests using Twisted's IProducer
         """
 
         self.url = url.rstrip('/')
@@ -60,6 +70,14 @@ class SolrClient(object):
         self._agent = Agent(reactor)
 
     def _request(self, method, path, headers, bodyProducer):
+        """
+        Performs a request to a Solr client using twisted.web.client.Agent.
+        The request examines the response to look for wrong header status.
+        Additionally, it parses the response using a ResponseConsumer and
+        creates a SolrResponse which will be given to the returning deferred
+        callback
+        """
+
         result = defer.Deferred()
 
         url = self.url + path
@@ -86,6 +104,10 @@ class SolrClient(object):
         return result
 
     def _update(self, input):
+        """
+        Performs a request to the /update method fo the Solr server
+        """
+
         method = 'POST'
         path = '/update?wt=json'
         headers = { 'Content-Type': [self.inputFactory.contentType] }
@@ -93,6 +115,10 @@ class SolrClient(object):
         return self._request(method, path, headers, input)
 
     def _select(self, params):
+        """
+        Performs a request to the /select method fo the Solr server
+        """
+
         # force JSON response for now
         params.update(wt='json')
 
@@ -117,40 +143,124 @@ class SolrClient(object):
         return self._request(method, path, headers, input)
 
     def add(self, documents, overwrite=None, commitWithin=None):
+        """
+        Add one or many documents to a Solr Instance
+
+        Returns a deferred which will callback a SolrResponse as parameter
+
+        @param documents: A dict or list of dicts representing the documents.
+        The dict's keys should be field names and the values field content.
+
+        @param overwrite: newer documents will replace previously added
+        documents with the same uniqueKey.
+
+        @param commitWithin: the addition will be committed within that time
+        """
+
         input = self.inputFactory.createAdd(documents, overwrite, commitWithin)
         return self._update(input)
 
     def delete(self, ids):
+        """
+        Delete one or many documents given the ID or IDs of the documents
+
+        Returns a deferred which will callback a SolrResponse as parameter
+
+        @param ids: a string or list of string representing the IDs of the
+        documents that will be deleted
+        """
+
         input = self.inputFactory.createDelete(ids)
         return self._update(input)
 
     def deleteByQuery(self, query):
+        """
+        Delete all documents returned by a query
+
+        Returns a deferred which will callback a SolrResponse as parameter
+
+        @param query: A query that returns the documents wanted to be deleted.
+        """
+
         input = self.inputFactory.createDeleteByQuery(query)
         return self._update(input)
 
     def commit(self, waitFlush=None, waitSearcher=None, expungeDeletes=None):
+        """
+        Issues a commit action to the Solr Server
+
+        Returns a deferred which will callback a SolrResponse as parameter
+
+        @param waitFlush: Server will block until index changes are flushed
+        to disk
+
+        @param waitSearcher: Server will  block until a new searcher is
+        opened and registered as the main query searcher
+
+        @param expungeDeletes: merge segments with deletes away
+        """
+
         input = self.inputFactory.createCommit(waitFlush,
                                                waitSearcher,
                                                expungeDeletes)
         return self._update(input)
 
     def rollback(self):
+        """
+        Withdraw all uncommitted changes
+
+        Returns a deferred which will callback a SolrResponse as parameter
+        """
+
         input = self.inputFactory.createRollback()
         return self._update(input)
 
     def optimize(self, waitFlush=None, waitSearcher=None, maxSegments=None):
+        """
+        Issues a commit action to the Solr Server
+
+        Returns a deferred which will callback a SolrResponse as parameter
+
+        @param waitFlush: Server will block until index changes are flushed
+        to disk
+
+        @param waitSearcher: Server will  block until a new searcher is
+        opened and registered as the main query searcher
+
+        @param maxSegments: optimizes down to at most this number of segments
+        """
+
         input = self.inputFactory.createOptimize(waitFlush,
                                                  waitSearcher,
                                                  maxSegments)
         return self._update(input)
 
     def search(self, query, **kwargs):
+        """
+        Performs a query in the Solr Server
+
+        Returns a deferred which will callback a SolrResponse as parameter.
+        The results member of the response will contain information about the
+        search results (see: SolrResponse)
+
+        @param query: The SolrQuery
+
+        @param *kwargs: Additional parameters for the server. For instance:
+        'hl' for highlighting, 'sort' for sorting, etc. See Solr documentation
+        for all available options
+        """
+
         params = {}
         params.update(kwargs)
         params.update(q=query.encode('UTF-8'))
         return self._select(params)
 
     def ping(self):
+        """
+        Just ping the server to know if it's alive.
+
+        Returns a deferred which will callback a SolrResponse as parameter
+        """
         method = 'GET'
         path = '/admin/ping?wt=json'
         headers = {}
