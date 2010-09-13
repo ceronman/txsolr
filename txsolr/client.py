@@ -1,3 +1,20 @@
+# -*- coding: utf-8 -*-
+
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """
 Solr Client for Twisted
 """
@@ -13,6 +30,10 @@ from txsolr.input import SimpleXMLInputFactory, StringProducer
 from txsolr.response import (ResponseConsumer, EmptyResponseConsumer,
                              JSONSolrResponse)
 from txsolr.errors import WrongHTTPStatus
+
+
+__all__ = ['SolrClient']
+
 
 _logger = logging.getLogger('txsolr')
 
@@ -134,32 +155,3 @@ class SolrClient(object):
         path = '/admin/ping?wt=json'
         headers = {}
         return self._request(method, path, headers, None)
-
-if __name__ == '__main__':
-#    import sys
-#    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-    import txsolr
-    txsolr.logToStderr()
-    c = SolrClient('http://localhost:8983/solr/')
-    document = {'id': 1, 'text': 'manuel tres', 'name': 'tres'}
-#    d = c.add([document])
-    d = c.commit()
-#    d = c.rollback()
-#    d = c.delete(1000)
-#    d = c._select({'q': 'manuel'.encode('UTF-8'), 'indent': 'true'})
-#    d = c.search('manuel')
-#    d = c.deleteByQuery('*:*')
-
-    def cb(content):
-        print 'Delivery:'
-        print content
-    d.addCallback(cb)
-
-    def er(failure):
-        print 'Error:'
-        print failure.getErrorMessage()
-        print failure.getTraceback()
-    d.addErrback(er)
-
-    d.addBoth(lambda _: reactor.stop())
-    reactor.run()
