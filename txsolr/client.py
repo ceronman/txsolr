@@ -32,9 +32,9 @@ from twisted.web.client import Agent
 from twisted.web.http_headers import Headers
 
 from txsolr.input import SimpleXMLInputFactory, StringProducer
+from txsolr.errors import WrongHTTPStatus
 from txsolr.response import (ResponseConsumer, EmptyResponseConsumer,
                              JSONSolrResponse)
-from txsolr.errors import WrongHTTPStatus
 
 
 __all__ = ['SolrClient']
@@ -58,9 +58,9 @@ class SolrClient(object):
 
         @param url: The URL of the Solr server
 
-        @param inputFactory: The input body generator. For advanced uses
-        this argument could be used to create custom body generators for
-        the requests using Twisted's IProducer
+        @param inputFactory: The input body generator. For advanced uses this
+        argument could be used to create custom body generators for the requests
+        using Twisted's IProducer
         """
 
         self.url = url.rstrip('/')
@@ -71,8 +71,8 @@ class SolrClient(object):
 
     def _request(self, method, path, headers, bodyProducer):
         """
-        Performs a request to a Solr client using twisted.web.client.Agent.
-        The request examines the response to look for wrong header status.
+        Performs a request to a Solr client using twisted.web.client.Agent. The
+        request examines the response to look for wrong header status.
         Additionally, it parses the response using a ResponseConsumer and
         creates a SolrResponse which will be given to the returning deferred
         callback
@@ -146,7 +146,7 @@ class SolrClient(object):
         """
         Add one or many documents to a Solr Instance
 
-        Returns a deferred which will callback a SolrResponse as parameter
+        @return: a deferred which will callback a SolrResponse as parameter
 
         @param documents: A dict or list of dicts representing the documents.
         The dict's keys should be field names and the values field content.
@@ -164,7 +164,7 @@ class SolrClient(object):
         """
         Delete one or many documents given the ID or IDs of the documents
 
-        Returns a deferred which will callback a SolrResponse as parameter
+        @return: a deferred which will callback a SolrResponse as parameter
 
         @param ids: a string or list of string representing the IDs of the
         documents that will be deleted
@@ -177,9 +177,9 @@ class SolrClient(object):
         """
         Delete all documents returned by a query
 
-        Returns a deferred which will callback a SolrResponse as parameter
+        @return: a deferred which will callback a SolrResponse as parameter
 
-        @param query: A query that returns the documents wanted to be deleted.
+        @param query: A query that returns the documents to be deleted.
         """
 
         input = self.inputFactory.createDeleteByQuery(query)
@@ -189,13 +189,13 @@ class SolrClient(object):
         """
         Issues a commit action to the Solr Server
 
-        Returns a deferred which will callback a SolrResponse as parameter
+        @return: a deferred which will callback a SolrResponse as parameter
 
-        @param waitFlush: Server will block until index changes are flushed
-        to disk
+        @param waitFlush: Server will block until index changes are flushed to
+        disk
 
-        @param waitSearcher: Server will  block until a new searcher is
-        opened and registered as the main query searcher
+        @param waitSearcher: Server will  block until a new searcher is opened
+        and registered as the main query searchers
 
         @param expungeDeletes: merge segments with deletes away
         """
@@ -209,7 +209,7 @@ class SolrClient(object):
         """
         Withdraw all uncommitted changes
 
-        Returns a deferred which will callback a SolrResponse as parameter
+        @return: a deferred which will callback a SolrResponse as parameter
         """
 
         input = self.inputFactory.createRollback()
@@ -219,13 +219,13 @@ class SolrClient(object):
         """
         Issues a commit action to the Solr Server
 
-        Returns a deferred which will callback a SolrResponse as parameter
+        @return: a deferred which will callback a SolrResponse as parameter
 
         @param waitFlush: Server will block until index changes are flushed
         to disk
 
-        @param waitSearcher: Server will  block until a new searcher is
-        opened and registered as the main query searcher
+        @param waitSearcher: Server will  block until a new searcher is opened
+        and registered as the main query searcher
 
         @param maxSegments: optimizes down to at most this number of segments
         """
@@ -239,9 +239,9 @@ class SolrClient(object):
         """
         Performs a query in the Solr Server
 
-        Returns a deferred which will callback a SolrResponse as parameter.
-        The results member of the response will contain information about the
-        search results (see: SolrResponse)
+        @return: a deferred which will callback a SolrResponse as parameter. The
+        results member of the response will contain information about the search
+        results (see: SolrResponse)
 
         @param query: The SolrQuery
 
@@ -259,7 +259,7 @@ class SolrClient(object):
         """
         Just ping the server to know if it's alive.
 
-        Returns a deferred which will callback a SolrResponse as parameter
+        @return: a deferred which will callback a SolrResponse as parameter
         """
         method = 'GET'
         path = '/admin/ping?wt=json'

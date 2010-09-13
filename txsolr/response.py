@@ -16,7 +16,11 @@
 # limitations under the License.
 
 """
-Solr Response Decoder
+Solr Responses
+
+This module contains classes for parsing responses from the Solr server.
+Additionally, it contains Consumer classes for getting a page body in HTTP
+Requests.
 """
 
 import logging
@@ -39,6 +43,16 @@ __all__ = ['ResponseConsumer', 'EmptyResponseConsumer', 'QueryResults',
 _logger = logging.getLogger('txsolr')
 
 class ResponseConsumer(Protocol):
+    """
+    This class implements a Consumer used to get a body from an HTTP request.
+    The consumer is used with the twisted.web.client.Agent class.
+
+    This base consumer gets the body and stores it in memory. For large bodies,
+    you should implement your own consumer that use some kind of disk storage.
+
+    The consumer should implement a Twisted Protocol
+    """
+
     def __init__(self, deferred, responseClass):
         self.body = ''
         self.deferred = deferred
@@ -60,12 +74,21 @@ class ResponseConsumer(Protocol):
 
 
 class EmptyResponseConsumer(Protocol):
+    """
+    This is a Consumer that does nothing. It stops the transfer immediately.
+    This is used for cases when we don't want to consume the body of an HTTP
+    response. For example, when we find a wrong status code in the header
+    """
 
     def conectionMade(self, bytes):
         self.transport.stopProducing()
 
 
 class QueryResults(object):
+    """
+    This is a simple class used to store the results of a query in a Solr
+    Response
+    """
 
     def __init__(self, numFound, start, docs):
         self.numFound = numFound
@@ -74,6 +97,24 @@ class QueryResults(object):
 
 
 class SolrResponse(object):
+    """
+    Used to represent a response given by a request to a Solr server. You should
+    create different subclasses for different response formats
+
+    @ivar responseDict: The full response as a dict. This is usefull when you
+    need an object very similar to the real response issued by the server
+
+    @ivar header: The header of the response. This is usually represented as
+    'responseHeader' in the response.
+
+    @ivar results: If this is a response of a query request, it will return the
+    results represented by a L{QueryResults}
+
+    Additionally, a SolrResponse may contains properties for other parts of the
+    response depending on the parameters of the request. For example a
+    'highlighting' property could be added if the query contains highlighting
+    parameters.
+    """
 
     decoder = None
 
@@ -130,6 +171,10 @@ class SolrResponse(object):
 
 
 class JSONSolrResponse(SolrResponse):
+    """
+    A SolrResponse that use a JSON Decoder. This decoder should be used when a
+    JSON response writer is requested to Solr.
+    """
 
     decoder = json.JSONDecoder()
 

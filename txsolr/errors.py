@@ -22,7 +22,12 @@ Errors
 __all__ = ['WrongHTTPStatus', 'SolrResponseError']
 
 class WrongHTTPStatus(ValueError):
-    pass
+    """
+    Raised when the response of an HTTP request to a Solr Server contains an
+    invalid status value (different than 200)
+    """
 
 class SolrResponseError(Exception):
-    pass
+    """
+    Raised when a problem decoding a Solr Response is found.
+    """
