@@ -52,10 +52,11 @@ class SimpleXMLInputFactory(object):
 
         return unicode(value)
 
+    # TODO: Remove me
     def _decodeValue(self, value):
         pass
 
-    def createAdd(self, document):
+    def createAdd(self, document, overwrite=None, commitWithin=None):
         """
         Create an add request in XML format
         """
@@ -66,6 +67,15 @@ class SimpleXMLInputFactory(object):
             documents = [document]
 
         addElement = ElementTree.Element('add')
+
+        if overwrite is not None:
+            overwrite = 'true' if overwrite else 'false'
+            addElement.set('overwrite', overwrite)
+
+        if commitWithin is not None:
+            commitWithin = str(commitWithin)
+            addElement.set('commitWithin', commitWithin)
+
         for doc in documents:
 
             docElement = ElementTree.Element('doc')

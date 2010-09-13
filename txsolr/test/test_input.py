@@ -38,13 +38,13 @@ class XMLInputTest(unittest.TestCase):
         Tests the creation of add input for the request
         """
 
-        self.assertRaises(AttributeError, self.input.createAdd, None)
-        self.assertRaises(AttributeError, self.input.createAdd, 'string')
-
         document = {'id': 1, 'text': 'hello'}
         expected = ('<add><doc><field name="text">hello</field>'
                     '<field name="id">1</field></doc></add>')
-        self.assertEqual(self.input.createAdd(document).body, expected)
+        input = self.input.createAdd(document).body
+        self.assertEqual(input, expected, 'Wrong input')
+
+    def test_createAddWithCollection(self):
 
         document = {'id': 1, 'collection': [1, 2, 3]}
         expected = ('<add><doc><field name="id">1</field>'
@@ -52,7 +52,32 @@ class XMLInputTest(unittest.TestCase):
                     '<field name="collection">2</field>'
                     '<field name="collection">3</field></doc></add>')
 
-        self.assertEqual(self.input.createAdd(document).body, expected)
+        input = self.input.createAdd(document).body
+        self.assertEqual(input, expected, 'Wrong input')
+
+    def test_createAddExceptions(self):
+
+        self.assertRaises(AttributeError, self.input.createAdd, None)
+        self.assertRaises(AttributeError, self.input.createAdd, 'string')
+
+
+    def test_createAddWithOverwrite(self):
+        document = {'id': 1, 'text': 'hello'}
+        expected = ('<add overwrite="true">'
+                    '<doc><field name="text">hello</field>'
+                    '<field name="id">1</field></doc></add>')
+
+        input = self.input.createAdd(document, overwrite=True).body
+        self.assertEqual(input, expected, 'Wrong input')
+
+    def test_createAddWithCommitWithin(self):
+        document = {'id': 1, 'text': 'hello'}
+        expected = ('<add commitWithin="80">'
+                    '<doc><field name="text">hello</field>'
+                    '<field name="id">1</field></doc></add>')
+
+        input = self.input.createAdd(document, commitWithin=80).body
+        self.assertEqual(input, expected, 'Wrong input')
 
     def test_createDelete(self):
         """

@@ -5,7 +5,7 @@ import string
 import datetime
 
 from twisted.trial import unittest
-from twisted.internet import defer
+from twisted.internet import defer, reactor
 
 from txsolr.client import SolrClient
 from txsolr.errors import WrongHTTPStatus
@@ -75,6 +75,59 @@ class AddingDocumentsTestCase(unittest.TestCase):
                          "Found ID does not match with added document")
 
         defer.returnValue(None)
+
+    @defer.inlineCallbacks
+    def test_addWithOverwrite(self):
+
+        initialId = _randomString(20)
+        initialName = _randomString(20)
+        newName = _randomString(20)
+
+        doc = {'id': initialId,
+               'name': initialName}
+
+        yield self.client.add(doc)
+        yield self.client.commit()
+
+        doc = {'id': initialId,
+               'name': newName}
+
+        yield self.client.add(doc, overwrite=False)
+        yield self.client.commit()
+
+        r = yield self.client.search('id:%s' % doc['id'])
+
+        self.assertNotEqual(r.results.docs[0]['name'], newName,
+                            'Overwrite option did not work')
+
+        self.assertEqual(r.results.docs[0]['name'], initialName,
+                         'Overwrite option did not work')
+
+        defer.returnValue(None)
+
+    @defer.inlineCallbacks
+    def test_addWithCommitWithin(self):
+
+        def wait(milliseconds):
+            d = defer.Deferred()
+            reactor.callLater(milliseconds/1000.0, d.callback, None)
+            return d
+
+        doc = {'id': _randomString(20)}
+
+        yield self.client.add(doc, commitWithin=1000)
+
+        r = yield self.client.search('id:%s' % doc['id'])
+
+        self.assertEqual(r.results.numFound, 0,
+                         "Comitted immediately")
+
+        yield wait(2000) # give extra time to the commit operation
+
+        r = yield self.client.search('id:%s' % doc['id'])
+
+        self.assertEqual(r.results.numFound, 1,
+                         "Operation was not commited")
 
     @defer.inlineCallbacks
     def test_addOneDocumentMultipleFields(self):

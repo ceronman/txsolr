@@ -95,10 +95,8 @@ class SolrClient(object):
 
         return self._request(method, path, headers, input)
 
-    # TODO: add parameters: overwrite, commitWithin and boost for docs and
-    # Fields
-    def add(self, documents):
-        input = self.inputFactory.createAdd(documents)
+    def add(self, documents, overwrite=None, commitWithin=None):
+        input = self.inputFactory.createAdd(documents, overwrite, commitWithin)
         return self._update(input)
 
     def delete(self, ids):
