@@ -17,10 +17,10 @@
 
 """
 txSolr is a Python client for the Solr Enterprise Search Server. It has been
-designed to be used with the twisted Asynchronous networking library.
+designed to be used with the Twisted asynchronous networking library.
 
 txSolr can be used to add, update, delete and query documents in a Solr
-instance. All operations return Twisted's deferreds for asynchronouns
+instance. All operations return Twisted's deferreds for asynchronous
 programming
 """
 
