@@ -88,13 +88,37 @@ class XMLInputTest(unittest.TestCase):
         expected = '<delete><id>123</id></delete>'
         self.assertEqual(self.input.createDelete(id).body, expected)
 
+    def test_createDeleteWithEncoding(self):
+
         id = '<hola>'
         expected = '<delete><id>&lt;hola&gt;</id></delete>'
         self.assertEqual(self.input.createDelete(id).body, expected)
 
+    def test_createDeleteMany(self):
+
         id = [1, 2, 3]
         expected = '<delete><id>1</id><id>2</id><id>3</id></delete>'
         self.assertEqual(self.input.createDelete(id).body, expected)
+
+    def test_commit(self):
+        input = self.input.createCommit().body
+        expected = '<commit />'
+        self.assertEqual(input, expected)
+
+    def test_commitWaitFlush(self):
+        input = self.input.createCommit(waitFlush=True).body
+        expected = '<commit waitFlush="true" />'
+        self.assertEqual(input, expected)
+
+    def test_commitWaitSearcher(self):
+        input = self.input.createCommit(waitSearcher=True).body
+        expected = '<commit waitSearcher="true" />'
+        self.assertEqual(input, expected)
+
+    def test_commitExpungeDeletes(self):
+        input = self.input.createCommit(expungeDeletes=True).body
+        expected = '<commit expungeDeletes="true" />'
+        self.assertEqual(input, expected)
 
 
 

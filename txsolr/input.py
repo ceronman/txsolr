@@ -123,8 +123,23 @@ class SimpleXMLInputFactory(object):
         result = ElementTree.tostring(deleteElement)
         return StringProducer(result)
 
-    def createCommit(self):
+    def createCommit(self, waitFlush=None,
+                           waitSearcher=None,
+                           expungeDeletes=None):
         commitElement = ElementTree.Element('commit')
+
+        if waitFlush is not None:
+            waitFlush = 'true' if waitFlush else 'false'
+            commitElement.set('waitFlush', waitFlush)
+
+        if waitSearcher is not None:
+            waitSearcher = 'true' if waitSearcher else 'false'
+            commitElement.set('waitSearcher', waitSearcher)
+
+        if expungeDeletes is not None:
+            expungeDeletes = 'true' if expungeDeletes else 'false'
+            commitElement.set('expungeDeletes', expungeDeletes)
+
         result = ElementTree.tostring(commitElement)
         return StringProducer(result)
 

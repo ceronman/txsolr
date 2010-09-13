@@ -108,8 +108,10 @@ class SolrClient(object):
         return self._update(input)
 
     # TODO: add parameters
-    def commit(self):
-        input = self.inputFactory.createCommit()
+    def commit(self, waitFlush=None, waitSearcher=None, expungeDeletes=None):
+        input = self.inputFactory.createCommit(waitFlush,
+                                               waitSearcher,
+                                               waitSearcher)
         return self._update(input)
 
     def rollback(self):
