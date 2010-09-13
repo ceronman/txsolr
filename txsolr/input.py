@@ -52,10 +52,6 @@ class SimpleXMLInputFactory(object):
 
         return unicode(value)
 
-    # TODO: Remove me
-    def _decodeValue(self, value):
-        pass
-
     def createAdd(self, document, overwrite=None, commitWithin=None):
         """
         Create an add request in XML format
