@@ -1,0 +1,6 @@
+- HTTPS support
+- Multiple value query options (i.e: facet.field)
+- Examples
+- More tests
+- XML Decoder
+- Better input producers

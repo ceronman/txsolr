@@ -1,0 +1,42 @@
+Introduction
+--------------------------------------------------------------------------------
+
+txSolr is a Twisted-based Asynchronous client library for Solr Enterprise Search
+Server txSolr is a Python client for the Solr Enterprise Search Server. It has
+been designed to be used with the Twisted asynchronous networking library.
+
+txSolr can be used to add, update, delete and query documents in a Solr
+instance. All operations return Twisted's deferreds for asynchronous
+programming
+
+For more about txsolr see:
+
+  http://launchpad.net/txsolr
+
+
+Requirements:
+--------------------------------------------------------------------------------
+
+Python 2.5+
+Twisted 9.0+
+
+Running the tests:
+--------------------------------------------------------------------------------
+
+To run the tests it's recommended to use Solr 1.4. Download Solr from here:
+
+http://lucene.apache.org/solr/
+
+Run the example server that comes in the zip following the Solr tutorial:
+
+http://lucene.apache.org/solr/tutorial.html
+
+* IMPORTANT: Never run the tests with a production Solr Server. The tests could
+             leave test documents in the index or important data could be
+             deleted.
+
+* NOTE: The test need a schema similar to the one that comes with the example
+
+Tu run the tests, be sure txsolr is in your current path and run:
+
+$ trial txsolr
