@@ -59,6 +59,7 @@ class ResponseConsumer(Protocol):
         self.responseClass=responseClass
 
     def dataReceived(self, bytes):
+        _logger.debug('Consumer data received:\n' + bytes)
         self.body += bytes
 
     def connectionLost(self, reason):
@@ -75,13 +76,13 @@ class ResponseConsumer(Protocol):
 
 class EmptyResponseConsumer(Protocol):
     """
-    This is a Consumer that does nothing. It stops the transfer immediately.
-    This is used for cases when we don't want to consume the body of an HTTP
-    response. For example, when we find a wrong status code in the header
+    This is a Consumer that does nothing. This is used for cases when we don't
+    want to consume the body of an HTTP response. For example, when we find a
+    wrong status code in the header
     """
 
-    def conectionMade(self, bytes):
-        self.transport.stopProducing()
+    def dataReceived(self, bytes):
+        _logger.debug('Consumer data received:\n' + bytes)
 
 
 class QueryResults(object):
