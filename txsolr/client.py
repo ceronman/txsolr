@@ -67,8 +67,6 @@ class SolrClient(object):
         if inputFactory == None:
             self.inputFactory = SimpleXMLInputFactory()
 
-        self._agent = Agent(reactor)
-
     def _request(self, method, path, headers, bodyProducer):
         """
         Performs a request to a Solr client using twisted.web.client.Agent. The
@@ -84,7 +82,8 @@ class SolrClient(object):
         headers.update({'User-Agent': ['txSolr']})
         headers = Headers(headers)
         _logger.debug('Requesting: [%s] %s' % (method, url))
-        d = self._agent.request(method, url, headers, bodyProducer)
+        agent = Agent(reactor)
+        d = agent.request(method, url, headers, bodyProducer)
 
         def responseCallback(response):
             _logger.debug('Received response from ' + url)
