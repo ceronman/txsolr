@@ -44,6 +44,11 @@ _logger.addHandler(_NullHandler())
 def logToStderr(level=logging.DEBUG):
     global _logger
     _logger.addHandler(logging.StreamHandler())
+
+
+def logToFile(filename, level=logging.DEBUG):
+    global _logger
+    _logger.addHandler(logging.FileHandler(filename))
     _logger.setLevel(level)
 
 

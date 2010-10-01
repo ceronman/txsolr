@@ -8,7 +8,7 @@ from twisted.trial import unittest
 from twisted.internet import defer, reactor
 
 from txsolr.client import SolrClient
-from txsolr.errors import WrongHTTPStatus
+from txsolr.errors import HTTPWrongStatus
 
 # FIXME: avoid hardcoded url
 SOLR_URL = 'http://localhost:8983/solr/'
@@ -25,7 +25,7 @@ class ConnectionTestCase(unittest.TestCase):
     def test_requestStatus(self):
         try:
             yield self.client._request('HEAD', '', {}, None)
-        except WrongHTTPStatus:
+        except HTTPWrongStatus:
             pass
 
     def test_addRequest(self):
