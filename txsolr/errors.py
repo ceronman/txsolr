@@ -21,6 +21,11 @@ Errors
 
 __all__ = ['HTTPWrongStatus', 'SolrResponseError', 'HTTPRequestError']
 
+class InputError(ValueError):
+    """
+    Decoding input failed
+    """
+
 class HTTPWrongStatus(ValueError):
     """
     Raised when the response of an HTTP request to a Solr Server contains an

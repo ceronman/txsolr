@@ -26,6 +26,7 @@ from zope.interface import implements
 from twisted.internet import defer
 from twisted.web.iweb import IBodyProducer
 
+from txsolr.errors import InputError
 
 __all__ = ['StringProducer', 'SimpleXMLInputFactory']
 
@@ -70,7 +71,11 @@ class SimpleXMLInputFactory(object):
         elif isinstance(value, bool):
             value = 'true' if value else 'false'
 
-        return unicode(value)
+        # TODO: Document exceptions
+        try:
+            return unicode(value)
+        except UnicodeError:
+            raise InputError('Unable to decode value %r' % value)
 
     def createAdd(self, document, overwrite=None, commitWithin=None):
         """
@@ -124,7 +129,7 @@ class SimpleXMLInputFactory(object):
 
         for id in ids:
             idElement = ElementTree.Element('id')
-            idElement.text = unicode(id)
+            idElement.text = self._encodeValue(id)
             deleteElement.append(idElement)
 
         result = ElementTree.tostring(deleteElement)
