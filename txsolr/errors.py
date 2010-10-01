@@ -19,7 +19,8 @@
 Errors
 """
 
-__all__ = ['HTTPWrongStatus', 'SolrResponseError', 'HTTPRequestError']
+__all__ = ['HTTPWrongStatus', 'SolrResponseError', 'HTTPRequestError',
+           'InputError']
 
 class InputError(ValueError):
     """
