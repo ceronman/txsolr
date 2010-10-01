@@ -19,7 +19,7 @@
 Errors
 """
 
-__all__ = ['HTTPWrongStatus', 'SolrResponseError']
+__all__ = ['HTTPWrongStatus', 'SolrResponseError', 'HTTPRequestError']
 
 class HTTPWrongStatus(ValueError):
     """
