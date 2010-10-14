@@ -28,7 +28,18 @@ from twisted.web.iweb import IBodyProducer
 
 from txsolr.errors import InputError
 
-__all__ = ['StringProducer', 'SimpleXMLInputFactory']
+__all__ = ['StringProducer', 'SimpleXMLInputFactory', 'escapeTerm']
+
+
+def escapeTerm(term):
+    """
+    Escapes special characters of the Lucene Query Syntax.
+
+    @param term: The term to be escaped.
+    @return the term with all the special characters escaped.
+    """
+    specialChars = set(r'\ + - & | ! ( ) { } [ ] ^ " ~ * ? :'.split())
+    return ''.join(('\\' + c if c in specialChars else c) for c in term)
 
 
 class StringProducer(object):

@@ -52,4 +52,3 @@ class ResponseTest(unittest.TestCase):
                 </response> '''
 
         self.assertRaises(SolrResponseError, JSONSolrResponse, raw)
-

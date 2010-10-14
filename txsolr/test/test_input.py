@@ -1,7 +1,21 @@
 import unittest
 from datetime import datetime, date
 
-from txsolr.input import SimpleXMLInputFactory
+from txsolr.input import SimpleXMLInputFactory, escapeTerm
+
+
+class EscapingTest(unittest.TestCase):
+
+    def test_escapeTerm(self):
+        terms = [(r'Hello*World', r'Hello\*World'),
+                 (r'Hello "World"', r'Hello \"World\"'),
+                 (r'Hello |&^"~*?', r'Hello \|\&\^\"\~\*\?'),
+                 (r'Hello (World)', r'Hello \(World\)'),
+                 (r'Hello World', r'Hello World'), ]
+
+        for raw, escaped in terms:
+            self.assertEqual(escapeTerm(raw), escaped)
+
 
 class XMLInputTest(unittest.TestCase):
 
@@ -139,9 +153,3 @@ class XMLInputTest(unittest.TestCase):
         input = self.input.createOptimize(maxSegments=2).body
         expected = '<optimize maxSegments="2" />'
         self.assertEqual(input, expected)
-
-
-
-
-
-
