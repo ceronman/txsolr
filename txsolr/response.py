@@ -25,10 +25,11 @@ Requests.
 
 import logging
 
-try:
-    import json #@UnusedImport for Python >= 2.6
-except:
-    import simplejson as json #@Reimport for Python < 2.6
+import sys
+if sys.hexversion >= 0x20600f0:
+    import json
+else:
+    import simplejson as json
 
 from twisted.internet.protocol import Protocol
 from twisted.web.client import ResponseDone
