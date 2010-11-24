@@ -2,16 +2,14 @@ Source: python-txsolr
 Section: python
 Priority: extra
 Maintainer: Manuel Cerón <manuel@fluidinfo.com>
-Build-Depends: cdbs, debhelper, python-support, python-all
-XS-Python-Version: >=2.5
-Standards-Version: 3.8.4
+Build-Depends: cdbs, debhelper (>= 7.0.50~), python (>= 2.5), python-support
+XS-Python-Version: >= 2.5
+Standards-Version: 3.9.1
+Homepage: http://launchpad.net/txsolr
 
 Package: python-txsolr
 Architecture: all
-Homepage: http://launchpad.net/txsolr
-XB-Python-Version: ${python:Versions}
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}, python-twisted-core
-Recommends: solr-tomcat
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}, python-twisted-web
 Description: Twisted-based asynchronous client library for Solr
  A Python client for the Solr Enterprise Search Server. It has been
  designed to be used with the Twisted asynchronous networking library.
