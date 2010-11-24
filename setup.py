@@ -18,10 +18,13 @@ setup(
         'Topic :: Software Development :: Libraries',
         'Topic :: Text Processing :: Indexing',
     ],
+
     author = 'Manuel Cerón',
     author_email = 'manuel@fluidinfo.com',
     url = 'https://launchpad.net/txsolr',
 
     packages = ['txsolr'],
-    data_files = [('share/doc/txsolr',['README', 'COPYING', 'TODO'])],
+    data_files = [
+        ('share/doc/txsolr', ['README', 'COPYING', 'TODO']),
+    ],
 )
