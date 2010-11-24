@@ -1,4 +1,4 @@
-txsolr (0.1.0) lucid; urgency=low
+python-txsolr (0.1.0) lucid; urgency=low
 
   * Initial release.
 
