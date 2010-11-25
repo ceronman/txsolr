@@ -1,3 +1,9 @@
+python-txsolr (0.1.0~bzr62-0ubuntu1) lucid; urgency=low
+
+  * Testing how to update packages.
+
+ -- Manuel Cerón <ceronman@naruto>  Thu, 25 Nov 2010 12:39:04 +0100
+
 python-txsolr (0.1.0~bzr61-ubuntu1) lucid; urgency=low
 
   * Initial release
