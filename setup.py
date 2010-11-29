@@ -24,7 +24,4 @@ setup(
     url = 'https://launchpad.net/txsolr',
 
     packages = ['txsolr'],
-    data_files = [
-        ('share/doc/txsolr', ['README', 'COPYING', 'TODO']),
-    ],
 )
