@@ -127,6 +127,7 @@ class SolrResponse(object):
         self.header = None
         self.results = None
 
+        self.rawResponse = response
         self.responseDict = self._decodeResponse(response)
         self._update()
 

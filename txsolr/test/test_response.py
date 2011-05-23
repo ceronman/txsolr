@@ -6,7 +6,6 @@ from txsolr.errors import SolrResponseError
 class ResponseTest(unittest.TestCase):
 
     def test_jsonSolrResponse(self):
-
         raw = '''{
                  "responseHeader":{
                   "status":0,
@@ -52,3 +51,17 @@ class ResponseTest(unittest.TestCase):
                 </response> '''
 
         self.assertRaises(SolrResponseError, JSONSolrResponse, raw)
+
+    def testSolrResponseRepr(self):
+        raw = '''{
+                 "responseHeader":{
+                  "status":0,
+                  "QTime":2,
+                  "params":{
+                    "indent":"on",
+                    "wt":"json",
+                    "q":"manuel"}},
+                 "response":{"numFound":0,"start":0,"docs":[]}
+                 }'''
+        response = JSONSolrResponse(raw)
+        self.assertEqual('SolrResponse: %s' % raw, repr(response))
