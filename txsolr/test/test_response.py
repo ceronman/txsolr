@@ -64,4 +64,4 @@ class ResponseTest(unittest.TestCase):
                  "response":{"numFound":0,"start":0,"docs":[]}
                  }'''
         response = JSONSolrResponse(raw)
-        self.assertEqual('SolrResponse: %s' % raw, repr(response))
+        self.assertEqual('SolrResponse: %r' % raw, repr(response))

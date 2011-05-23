@@ -170,7 +170,7 @@ class SolrResponse(object):
             raise SolrResponseError(msg)
 
     def __repr__(self):
-        return 'SolrResponse: %s' % repr(self.rawResponse)
+        return 'SolrResponse: %r' % self.rawResponse
 
 
 class JSONSolrResponse(SolrResponse):
