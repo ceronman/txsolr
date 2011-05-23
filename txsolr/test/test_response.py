@@ -53,6 +53,7 @@ class ResponseTest(unittest.TestCase):
         self.assertRaises(SolrResponseError, JSONSolrResponse, raw)
 
     def testSolrResponseRepr(self):
+        """A L{SolrResponse} representation shows the raw response."""
         raw = '''{
                  "responseHeader":{
                   "status":0,
