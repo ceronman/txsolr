@@ -3,10 +3,12 @@ import unittest
 from txsolr.response import JSONSolrResponse
 from txsolr.errors import SolrResponseError
 
-class ResponseTest(unittest.TestCase):
 
-    def test_jsonSolrResponse(self):
-        raw = '''{
+class JSONSorlResponseTest(unittest.TestCase):
+
+    def testJsonSolrResponse(self):
+        """L{JSONSolrResponse} correctly decodes a Solr JSON Response."""
+        raw = """{
                  "responseHeader":{
                   "status":0,
                   "QTime":2,
@@ -15,7 +17,7 @@ class ResponseTest(unittest.TestCase):
                     "wt":"json",
                     "q":"manuel"}},
                  "response":{"numFound":0,"start":0,"docs":[]}
-                 }'''
+                 }"""
 
         r = JSONSolrResponse(raw)
 
@@ -24,7 +26,7 @@ class ResponseTest(unittest.TestCase):
         self.assertEqual(r.results.numFound, 0)
         self.assertEqual(len(r.results.docs), 0)
 
-        raw = '''{
+        raw = """{
                  "responseHeader":{
                   "status":1,
                   "QTime":2,
@@ -33,11 +35,11 @@ class ResponseTest(unittest.TestCase):
                     "wt":"json",
                     "q":"manuel"}},
                  "response":{"numFound":0,"start":0,"docs":[]}
-                 }'''
+                 }"""
 
         self.assertRaises(SolrResponseError, JSONSolrResponse, raw)
 
-        raw = '''<response>
+        raw = """<response>
                     <lst name="responseHeader">
                      <int name="status">0</int>
                      <int name="QTime">0</int>
@@ -48,7 +50,7 @@ class ResponseTest(unittest.TestCase):
                      </lst>
                     </lst>
                     <result name="response" numFound="0" start="0"/>
-                </response> '''
+                </response>"""
 
         self.assertRaises(SolrResponseError, JSONSolrResponse, raw)
 
