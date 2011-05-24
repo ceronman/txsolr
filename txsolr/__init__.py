@@ -39,16 +39,17 @@ class _NullHandler(logging.Handler):
 
 
 _logger = logging.getLogger('txsolr')
-_logger.propagate = False
 _logger.addHandler(_NullHandler())
 
 
 def logToStderr(level=logging.DEBUG):
     logger = logging.getLogger('txsolr')
     logger.addHandler(logging.StreamHandler())
+    logger.propagate = False
 
 
 def logToFile(filename, level=logging.DEBUG):
     logger = logging.getLogger('txsolr')
     logger.addHandler(logging.FileHandler(filename))
     logger.setLevel(level)
+    logger.propagate = False
