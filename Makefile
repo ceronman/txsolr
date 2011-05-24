@@ -4,7 +4,7 @@ clean:
 	rm -rf _trial_temp
 
 check:
-	@trial txsolr
+	trial txsolr
 
 info:
 	@bzr info
@@ -19,8 +19,8 @@ info:
 	@find txsolr -name \*py | grep test_ | xargs cat | wc -l
 
 lint:
-	@pep8 $(shell find . -name \*py)
-	@pyflakes $(shell find . -name \*py)
+	pep8 $(shell find . -name \*py)
+	pyflakes $(shell find . -name \*py)
 
 api:
 	pydoctor --project-name txSolr --make-html --html-output doc --add-package txsolr
