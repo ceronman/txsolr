@@ -23,4 +23,10 @@ lint:
 	pyflakes $(shell find . -name \*py)
 
 api:
-	pydoctor --project-name txSolr --make-html --html-output doc --add-package txsolr
+	pydoctor --project-name txSolr \
+             --make-html \
+             --html-output doc \
+	         --add-package txsolr
+
+release:
+	python setup.py sdist
