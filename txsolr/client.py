@@ -119,11 +119,11 @@ class SolrClient(object):
         """
 
         # force JSON response for now
-        params.update(wt='json')
+        params.update(wt=u'json')
 
         # Some solr params contains dots (i.e: ht.fl) We use underscores and
         # replace
-        params = dict((key.replace('_', '.'), value)
+        params = dict((key.replace('_', '.'), value.encode('UTF-8'))
                       for key, value in params.iteritems())
 
         query = urllib.urlencode(params)
@@ -251,7 +251,7 @@ class SolrClient(object):
 
         params = {}
         params.update(kwargs)
-        params.update(q=query.encode('UTF-8'))
+        params.update(q=query)
         return self._select(params)
 
     def ping(self):

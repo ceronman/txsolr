@@ -497,6 +497,20 @@ class QueryingDocumentsTestCase(unittest.TestCase):
         defer.returnValue(None)
 
     @defer.inlineCallbacks
+    def testSearchWithUnicodeArguments(self):
+        r = yield self.client.search('*:*', fq=u'info_t:ブリーチ')
+
+        self.assertEqual(r.results.numFound, 1,
+                         'Wrong numFound after query')
+
+        doc = r.results.docs[0]
+        self.assertEqual(doc['id'], self.bleachId,
+                        'Document found does not match with added one')
+
+        defer.returnValue(None)
+
+
+    @defer.inlineCallbacks
     def test_queryWithFields(self):
 
         # Fist test query with a single field
