@@ -121,12 +121,16 @@ class SolrClient(object):
         # force JSON response for now
         params.update(wt=u'json')
 
-        # Some solr params contains dots (i.e: ht.fl) We use underscores and
-        # replace
-        params = dict((key.replace('_', '.'), value.encode('UTF-8'))
-                      for key, value in params.iteritems())
+        
+        encodedParameters = {}
+        for key, value in params.iteritems():
+            # Some solr params contains dots (i.e: ht.fl) We use underscores.
+            key = key.replace('_', '.')
+            if isinstance(value, unicode):
+                value = value.encode('UTF-8')
+            encodedParameters[key] = value
 
-        query = urllib.urlencode(params)
+        query = urllib.urlencode(encodedParameters)
 
         if len(query) < 1024:
             method = 'GET'
