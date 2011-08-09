@@ -40,6 +40,7 @@ class _NullHandler(logging.Handler):
         pass
 
 _logger = logging.getLogger('txsolr')
+_logger.propagate = False
 _logger.addHandler(_NullHandler())
 
 def logToStderr(level=logging.DEBUG):
