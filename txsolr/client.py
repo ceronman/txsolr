@@ -124,7 +124,6 @@ class SolrClient(object):
         # force JSON response for now
         params.update(wt=u'json')
 
-        
         encodedParameters = {}
         for key, value in params.iteritems():
             # Some solr params contains dots (i.e: ht.fl) We use underscores.

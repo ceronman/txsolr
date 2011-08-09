@@ -23,8 +23,12 @@ import logging
 
 from client import SolrClient
 from input import escapeTerm
-from errors import *
+from errors import (
+    InputError, HTTPWrongStatus, SolrResponseError, HTTPRequestError)
 
+# Used to ignore pyflakes errors.
+_ = (SolrClient, escapeTerm, InputError, HTTPWrongStatus,
+     SolrResponseError, HTTPRequestError)
 
 __author__ = 'Manuel Cerón'
 __license__ = 'http://www.apache.org/licenses/LICENSE-2.0'
