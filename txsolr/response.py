@@ -14,22 +14,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
-Solr Responses
+Solr Responses.
 
 This module contains classes for parsing responses from the Solr server.
 Additionally, it contains Consumer classes for getting a page body in HTTP
 Requests.
 """
-
 import logging
-
-import sys
-if sys.hexversion >= 0x20600f0:
-    import json
-else:
-    import simplejson as json
+import json
 
 from twisted.internet.protocol import Protocol
 from twisted.web.client import ResponseDone
@@ -43,21 +36,26 @@ __all__ = ['ResponseConsumer', 'EmptyResponseConsumer', 'QueryResults',
 
 _logger = logging.getLogger('txsolr')
 
+
 class ResponseConsumer(Protocol):
     """
     This class implements a Consumer used to get a body from an HTTP request.
-    The consumer is used with the twisted.web.client.Agent class.
+    The consumer is used with the L{twisted.web.client.Agent} class.
 
     This base consumer gets the body and stores it in memory. For large bodies,
     you should implement your own consumer that use some kind of disk storage.
 
-    The consumer should implement a Twisted Protocol
+    The consumer should implement a Twisted L{Protocol}.
+
+    @param deferred: A L{Deferred} that will be fired when all the body is
+        consumed.
+    @param responseClass: A L{SolrResponse} subclass able to parse the body.
     """
 
     def __init__(self, deferred, responseClass):
         self.body = ''
         self.deferred = deferred
-        self.responseClass=responseClass
+        self.responseClass = responseClass
 
     def dataReceived(self, bytes):
         _logger.debug('Consumer data received:\n' + bytes)
@@ -79,7 +77,7 @@ class EmptyResponseConsumer(Protocol):
     """
     This is a Consumer that does nothing. This is used for cases when we don't
     want to consume the body of an HTTP response. For example, when we find a
-    wrong status code in the header
+    wrong status code in the header.
     """
 
     def dataReceived(self, bytes):
@@ -89,7 +87,12 @@ class EmptyResponseConsumer(Protocol):
 class QueryResults(object):
     """
     This is a simple class used to store the results of a query in a Solr
-    Response
+    Response.
+
+    @ivar numFound: The number of documents found.
+    @ivar start: An C{int} representing the first document shown.
+        Used for pagination.
+    @ivar: docs: A C{dict} representing the documents found.
     """
 
     def __init__(self, numFound, start, docs):
@@ -99,23 +102,24 @@ class QueryResults(object):
 
 
 class SolrResponse(object):
-    """
-    Used to represent a response given by a request to a Solr server. You should
-    create different subclasses for different response formats
+    """Used to represent a response given by a request to a Solr server.
 
-    @ivar responseDict: The full response as a dict. This is usefull when you
-    need an object very similar to the real response issued by the server
-
-    @ivar header: The header of the response. This is usually represented as
-    'responseHeader' in the response.
-
-    @ivar results: If this is a response of a query request, it will return the
-    results represented by a L{QueryResults}
-
+    You should create different subclasses for different response formats.
     Additionally, a SolrResponse may contains properties for other parts of the
     response depending on the parameters of the request. For example a
     'highlighting' property could be added if the query contains highlighting
     parameters.
+
+    @cvar: decoder: An object with a C{decode} method able to decode a raw
+        response in a given format.
+    @ivar responseDict: The full response as a dict. This is usefull when you
+        need an object very similar to the real response issued by the server
+    @ivar header: The header of the response. This is usually represented as
+        'responseHeader' in the response.
+    @ivar results: If this is a response of a query request, it will return the
+        results represented by a L{QueryResults}
+
+    @param response: The raw response to be decoded.
     """
 
     decoder = None
@@ -132,7 +136,6 @@ class SolrResponse(object):
         self._update()
 
     def _update(self):
-
         response = self.responseDict
 
         if not 'responseHeader' in response:
@@ -160,7 +163,6 @@ class SolrResponse(object):
 
             setattr(self, key, value)
 
-
     def _decodeResponse(self, response):
         try:
             return self.decoder.decode(response)
@@ -180,4 +182,3 @@ class JSONSolrResponse(SolrResponse):
     """
 
     decoder = json.JSONDecoder()
-

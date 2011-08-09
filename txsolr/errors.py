@@ -14,31 +14,29 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Exception classes for txSolr.
+"""
 
-"""
-Errors
-"""
 
 __all__ = ['HTTPWrongStatus', 'SolrResponseError', 'HTTPRequestError',
            'InputError']
 
+
 class InputError(ValueError):
-    """
-    Decoding input failed
-    """
+    """Decoding input failed."""
+
 
 class HTTPWrongStatus(ValueError):
     """
     Raised when the response of an HTTP request to a Solr Server contains an
-    invalid status value (different than 200)
+    invalid status value (different than 200).
     """
+
 
 class SolrResponseError(Exception):
-    """
-    Raised when a problem decoding a Solr Response is found.
-    """
+    """Raised when a problem decoding a Solr Response is found."""
+
 
 class HTTPRequestError(Exception):
-    """
-    Raised when a problem is found when performing a request to Solr
-    """
+    """Raised when a problem is found when performing a request to Solr."""
