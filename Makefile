@@ -1,7 +1,4 @@
-clean:
-	find . -name \*pyc -exec rm {} \;
-	rm -rf doc
-	rm -rf _trial_temp
+
 
 check:
 	trial txsolr
