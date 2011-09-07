@@ -1,10 +1,15 @@
-import unittest
-
-from txsolr.response import JSONSolrResponse
+from twisted.python.failure import Failure
+from twisted.web.http import OK
+from twisted.web.http_headers import Headers
+from twisted.trial.unittest import TestCase
 from txsolr.errors import SolrResponseError
+from txsolr.response import JSONSolrResponse, ResponseConsumer
+from twisted.internet.defer import Deferred, inlineCallbacks
+from twisted.internet.error import ConnectionDone
 
 
-class JSONSorlResponseTest(unittest.TestCase):
+
+class JSONSorlResponseTest(TestCase):
 
     def testJsonSolrResponse(self):
         """L{JSONSolrResponse} correctly decodes a Solr JSON Response."""
@@ -68,3 +73,57 @@ class JSONSorlResponseTest(unittest.TestCase):
                  }'''
         response = JSONSolrResponse(raw)
         self.assertEqual('SolrResponse: %r' % raw, repr(response))
+
+
+class ResponseConsumerTest(TestCase):
+
+    @inlineCallbacks
+    def testResponseConsumerWithGoodResponse(self):
+        """
+        The L{ResponseConsumer} protocol should fire the given L{Deferred} if
+        the given body is a valid Solr response.
+        """
+        deferred = Deferred()
+        consumer = ResponseConsumer(deferred, JSONSolrResponse)
+        rawResponse = """{
+             "responseHeader":{
+              "status":0,
+              "QTime":2,
+              "params":{
+                "indent":"on",
+                "wt":"json",
+                "q":"manuel"}},
+             "response":{"numFound":0,"start":0,"docs":[]}
+             }"""
+        response = FakeResponse(ConnectionDone, rawResponse)
+        response.deliverBody(consumer)
+        solrResponse = yield deferred
+        self.assertEqual(solrResponse.header['status'], 0)
+        self.assertEqual(solrResponse.header['QTime'], 2)
+        self.assertEqual(solrResponse.results.numFound, 0)
+        self.assertEqual(len(solrResponse.results.docs), 0)
+
+
+class FakeResponse(object):
+    """A fake C{Response} that can stream a response payload to a consumer.
+
+    @param reason: An exception instance describing the reason the connection
+        was lost.
+    @param body: The response payload to deliver to the consumer.
+    @param code: Optionally, the HTTP status code for this request.  Default
+        is C{200} (OK).
+    @param headers: Optionally, a C{Headers} instance with the response
+        headers.
+    """
+
+    def __init__(self, reason, body, code=None, headers=None):
+        self.reason = reason
+        self.body = body
+        if code:
+            self.code = OK
+        if headers:
+            self.headers = Headers({})
+
+    def deliverBody(self, protocol):
+        protocol.dataReceived(self.body)
+        protocol.connectionLost(Failure(self.reason))
