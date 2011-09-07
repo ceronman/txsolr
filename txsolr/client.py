@@ -32,7 +32,7 @@ from twisted.web.client import Agent
 from twisted.web.http_headers import Headers
 
 from txsolr.input import SimpleXMLInputFactory, StringProducer
-from txsolr.errors import HTTPWrongStatus
+from txsolr.errors import HTTPWrongStatus, HTTPRequestError
 from txsolr.response import (ResponseConsumer, EmptyResponseConsumer,
                              JSONSolrResponse)
 
@@ -96,10 +96,9 @@ class SolrClient(object):
                 response.deliverBody(deliveryProtocol)
 
         def responseErrback(failure):
-            result.errback(failure)
+            result.errback(HTTPRequestError(failure))
 
         d.addCallbacks(responseCallback, responseErrback)
-        d.addErrback(responseErrback)
         return result
 
     def _update(self, input):
