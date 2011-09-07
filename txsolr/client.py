@@ -99,6 +99,7 @@ class SolrClient(object):
             result.errback(HTTPRequestError(failure))
 
         d.addCallbacks(responseCallback, responseErrback)
+        d.addErrback(responseErrback)
         return result
 
     def _update(self, input):
