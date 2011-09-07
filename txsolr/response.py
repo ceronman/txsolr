@@ -30,7 +30,7 @@ from twisted.web.client import ResponseDone
 from txsolr.errors import SolrResponseError
 
 
-__all__ = ['ResponseConsumer', 'EmptyResponseConsumer', 'QueryResults',
+__all__ = ['ResponseConsumer', 'DiscardingResponseConsumer', 'QueryResults',
            'SolrResponse', 'JSONSolrResponse']
 
 
@@ -74,7 +74,7 @@ class ResponseConsumer(Protocol):
             self.deferred.callback(response)
 
 
-class EmptyResponseConsumer(Protocol):
+class DiscardingResponseConsumer(Protocol):
     """
     This is a Consumer that does nothing. This is used for cases when we don't
     want to consume the body of an HTTP response. For example, when we find a
