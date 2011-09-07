@@ -62,15 +62,15 @@ class ResponseConsumer(Protocol):
         self.body += bytes
 
     def connectionLost(self, reason):
-        if not isinstance(reason.value, ResponseDone):
+        if not reason.check(ResponseDone):
             _logger.warning('unclean response: ' + repr(reason.value))
 
         try:
             response = self.responseClass(self.body)
         except SolrResponseError, e:
-            self.errback(e)
-
-        self.deferred.callback(response)
+            self.deferred.errback(e)
+        else:
+            self.deferred.callback(response)
 
 
 class EmptyResponseConsumer(Protocol):

@@ -103,6 +103,17 @@ class ResponseConsumerTest(TestCase):
         self.assertEqual(solrResponse.results.numFound, 0)
         self.assertEqual(len(solrResponse.results.docs), 0)
 
+    def testResponseConsumerWithBadResponse(self):
+        """
+        The L{ResponseConsumer} protocol should fire the given L{Deferred} with
+        an C{errback} with L{SolrResponseError} if the decoding fails.
+        """
+        deferred = Deferred()
+        consumer = ResponseConsumer(deferred, JSONSolrResponse)
+        response = FakeResponse(ConnectionDone, 'Bad body!')
+        response.deliverBody(consumer)
+        return self.assertFailure(deferred, SolrResponseError)
+
 
 class FakeResponse(object):
     """A fake C{Response} that can stream a response payload to a consumer.
