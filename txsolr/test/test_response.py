@@ -1,12 +1,12 @@
-from twisted.python.failure import Failure
-from twisted.web.http import OK
-from twisted.web.http_headers import Headers
-from twisted.trial.unittest import TestCase
-from txsolr.errors import SolrResponseError
-from txsolr.response import JSONSolrResponse, ResponseConsumer
 from twisted.internet.defer import Deferred, inlineCallbacks
 from twisted.internet.error import ConnectionDone
+from twisted.python.failure import Failure
+from twisted.trial.unittest import TestCase
+from twisted.web.http import OK
+from twisted.web.http_headers import Headers
 
+from txsolr.response import JSONSolrResponse, ResponseConsumer
+from txsolr.errors import SolrResponseError
 
 
 class JSONSorlResponseTest(TestCase):

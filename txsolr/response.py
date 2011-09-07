@@ -63,11 +63,12 @@ class ResponseConsumer(Protocol):
 
     def connectionLost(self, reason):
         if not reason.check(ResponseDone):
-            _logger.warning('unclean response: ' + repr(reason.value))
+            _logger.warning('Unclean response: ' + repr(reason.value))
 
         try:
             response = self.responseClass(self.body)
         except SolrResponseError, e:
+            _logger.error("Can't decode response body: %r" % self.body)
             self.deferred.errback(e)
         else:
             self.deferred.callback(response)

@@ -19,8 +19,7 @@ Exception classes for txSolr.
 """
 
 
-__all__ = ['HTTPWrongStatus', 'SolrResponseError', 'HTTPRequestError',
-           'InputError']
+__all__ = ['HTTPWrongStatus', 'SolrResponseError', 'InputError']
 
 
 class InputError(ValueError):
@@ -36,7 +35,3 @@ class HTTPWrongStatus(ValueError):
 
 class SolrResponseError(Exception):
     """Raised when a problem decoding a Solr Response is found."""
-
-
-class HTTPRequestError(Exception):
-    """Raised when a problem is found when performing a request to Solr."""
