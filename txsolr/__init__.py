@@ -48,12 +48,18 @@ _logger.addHandler(_NullHandler())
 
 def logToStderr(level=logging.DEBUG):
     logger = logging.getLogger('txsolr')
-    logger.addHandler(logging.StreamHandler())
+    formatter = logging.Formatter('%(asctime)s %(levelname)8s  %(message)s')
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
     logger.propagate = False
 
 
 def logToFile(filename, level=logging.DEBUG):
     logger = logging.getLogger('txsolr')
-    logger.addHandler(logging.FileHandler(filename))
+    formatter = logging.Formatter('%(asctime)s %(levelname)8s  %(message)s')
+    handler = logging.FileHandler(filename)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
     logger.setLevel(level)
     logger.propagate = False

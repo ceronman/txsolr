@@ -33,7 +33,7 @@ from twisted.web.http_headers import Headers
 
 from txsolr.input import SimpleXMLInputFactory, StringProducer
 from txsolr.errors import HTTPWrongStatus, HTTPRequestError
-from txsolr.response import (ResponseConsumer, EmptyResponseConsumer,
+from txsolr.response import (ResponseConsumer, DiscardingResponseConsumer,
                              JSONSolrResponse)
 
 
@@ -87,18 +87,25 @@ class SolrClient(object):
 
         def responseCallback(response):
             _logger.debug('Received response from ' + url)
-            if response.code != 200:
-                deliveryProtocol = EmptyResponseConsumer()
-                response.deliverBody(deliveryProtocol)
-                result.errback(HTTPWrongStatus(response.code))
-            else:
-                deliveryProtocol = ResponseConsumer(result, JSONSolrResponse)
-                response.deliverBody(deliveryProtocol)
+            try:
+                if response.code == 200:
+                    deliveryProtocol = ResponseConsumer(result,
+                                                        JSONSolrResponse)
+                    response.deliverBody(deliveryProtocol)
+                else:
+                    deliveryProtocol = DiscardingResponseConsumer()
+                    response.deliverBody(deliveryProtocol)
+                    result.errback(HTTPWrongStatus(response.code))
+            except Exception as e:
+                result.errback(e)
 
         def responseErrback(failure):
-            result.errback(HTTPRequestError(failure))
+            """Unknown error from Agent.request."""
+            result.errback(HTTPRequestError(failure.value))
+            _logger.error(failure.value)
 
         d.addCallbacks(responseCallback, responseErrback)
+
         return result
 
     def _update(self, input):
