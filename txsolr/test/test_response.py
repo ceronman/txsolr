@@ -1,12 +1,12 @@
 from twisted.internet.defer import Deferred, inlineCallbacks
-from twisted.internet.error import ConnectionDone
 from twisted.python.failure import Failure
 from twisted.trial.unittest import TestCase
+from twisted.web.client import ResponseDone
 from twisted.web.http import OK
 from twisted.web.http_headers import Headers
 
-from txsolr.response import JSONSolrResponse, ResponseConsumer
 from txsolr.errors import SolrResponseError
+from txsolr.response import JSONSolrResponse, ResponseConsumer
 
 
 class JSONSorlResponseTest(TestCase):
@@ -95,7 +95,7 @@ class ResponseConsumerTest(TestCase):
                 "q":"manuel"}},
              "response":{"numFound":0,"start":0,"docs":[]}
              }"""
-        response = FakeResponse(ConnectionDone, rawResponse)
+        response = FakeResponse(ResponseDone(), rawResponse)
         response.deliverBody(consumer)
         solrResponse = yield deferred
         self.assertEqual(solrResponse.header['status'], 0)
@@ -110,7 +110,7 @@ class ResponseConsumerTest(TestCase):
         """
         deferred = Deferred()
         consumer = ResponseConsumer(deferred, JSONSolrResponse)
-        response = FakeResponse(ConnectionDone, 'Bad body!')
+        response = FakeResponse(ResponseDone(), 'Bad body!')
         response.deliverBody(consumer)
         return self.assertFailure(deferred, SolrResponseError)
 

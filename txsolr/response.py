@@ -21,11 +21,12 @@ This module contains classes for parsing responses from the Solr server.
 Additionally, it contains Consumer classes for getting a page body in HTTP
 Requests.
 """
-import logging
 import json
+import logging
 
 from twisted.internet.protocol import Protocol
 from twisted.web.client import ResponseDone
+from twisted.web.http import PotentialDataLoss
 
 from txsolr.errors import SolrResponseError
 
@@ -53,25 +54,28 @@ class ResponseConsumer(Protocol):
     """
 
     def __init__(self, deferred, responseClass):
-        self.body = ''
+        self.bodyParts = []
         self.deferred = deferred
         self.responseClass = responseClass
 
     def dataReceived(self, bytes):
         _logger.debug('Consumer data received:\n' + bytes)
-        self.body += bytes
+        self.bodyParts.append(bytes)
 
     def connectionLost(self, reason):
-        if not reason.check(ResponseDone):
-            _logger.warning('Unclean response: ' + repr(reason.value))
-
-        try:
-            response = self.responseClass(self.body)
-        except SolrResponseError, e:
-            _logger.error("Can't decode response body: %r" % self.body)
-            self.deferred.errback(e)
+        # FIXME: With solr 3.3, we'll always get PotentialDataLoss because the
+        # Agent sends a Connection: close header.
+        if reason.check(ResponseDone, PotentialDataLoss):
+            try:
+                body = ''.join(self.bodyParts)
+                response = self.responseClass(body)
+            except Exception, e:
+                _logger.error("Can't decode response body: %r" % body)
+                self.deferred.errback(e)
+            else:
+                self.deferred.callback(response)
         else:
-            self.deferred.callback(response)
+            self.deferred.errback(reason)
 
 
 class DiscardingResponseConsumer(Protocol):

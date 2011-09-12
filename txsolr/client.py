@@ -87,19 +87,24 @@ class SolrClient(object):
 
         def responseCallback(response):
             _logger.debug('Received response from ' + url)
-            if response.code == 200:
-                deliveryProtocol = ResponseConsumer(result, JSONSolrResponse)
-                response.deliverBody(deliveryProtocol)
-            else:
-                deliveryProtocol = DiscardingResponseConsumer()
-                response.deliverBody(deliveryProtocol)
-                result.errback(HTTPWrongStatus(response.code))
+            try:
+                if response.code == 200:
+                    deliveryProtocol = ResponseConsumer(result, JSONSolrResponse)
+                    response.deliverBody(deliveryProtocol)
+                else:
+                    deliveryProtocol = DiscardingResponseConsumer()
+                    response.deliverBody(deliveryProtocol)
+                    result.errback(HTTPWrongStatus(response.code))
+            except Exception as e:
+                result.errback(e)
 
         def responseErrback(failure):
-            result.errback(HTTPRequestError(failure))
+            """Unknown error from Agent.request."""
+            result.errback(HTTPRequestError(failure.value))
+            _logger.error(failure.value)
 
-        d.addCallbacks(responseCallback)
-        d.addErrback(responseErrback)
+        d.addCallbacks(responseCallback, responseErrback)
+
         return result
 
     def _update(self, input):
