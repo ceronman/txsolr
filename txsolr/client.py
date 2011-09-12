@@ -89,7 +89,8 @@ class SolrClient(object):
             _logger.debug('Received response from ' + url)
             try:
                 if response.code == 200:
-                    deliveryProtocol = ResponseConsumer(result, JSONSolrResponse)
+                    deliveryProtocol = ResponseConsumer(result,
+                                                        JSONSolrResponse)
                     response.deliverBody(deliveryProtocol)
                 else:
                     deliveryProtocol = DiscardingResponseConsumer()
