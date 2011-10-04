@@ -56,6 +56,16 @@ class SimpleXMLInputFactoryTest(unittest.TestCase):
         input = self.input.createAdd(document).body
         self.assertEqual(input, expected, 'Wrong input')
 
+    def testCreateAddEncoding(self):
+        """
+        L{SimpleXMLInputFactory.createAdd} encodes the C{add} request as UTF-8.
+        """
+        document = {'id': 1, 'text': u'\U0001d1b6'}
+        expected = ('<add><doc><field name="text">\xf0\x9d\x86\xb6</field>'
+                    '<field name="id">1</field></doc></add>')
+        input = self.input.createAdd(document).body
+        self.assertEqual(input, expected, 'Wrong input')
+
     def testCreateAddWithCollection(self):
         """
         L{SimpleXMLInputFactory.createAdd} creates a correct body for an C{add}
@@ -109,6 +119,15 @@ class SimpleXMLInputFactoryTest(unittest.TestCase):
         """
         id = 123
         expected = '<delete><id>123</id></delete>'
+        self.assertEqual(self.input.createDelete(id).body, expected)
+
+    def testCreateDeleteEncoding(self):
+        """
+        L{SimpleXMLInputFactory.createDelete} encodes a C{delete} request as
+        UTF-8.
+        """
+        id = u'\U0001d1b6'
+        expected = '<delete><id>\xf0\x9d\x86\xb6</id></delete>'
         self.assertEqual(self.input.createDelete(id).body, expected)
 
     def testCreateDeleteWithEncoding(self):
