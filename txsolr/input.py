@@ -127,7 +127,7 @@ class SimpleXMLInputFactory(object):
                     docElement.append(fieldElement)
             addElement.append(docElement)
 
-        result = ElementTree.tostring(addElement)
+        result = ElementTree.tostring(addElement, encoding='utf-8')
         return StringProducer(result)
 
     def createDelete(self, id):
@@ -143,7 +143,7 @@ class SimpleXMLInputFactory(object):
             idElement.text = self._encodeValue(id)
             deleteElement.append(idElement)
 
-        result = ElementTree.tostring(deleteElement)
+        result = ElementTree.tostring(deleteElement, encoding='utf-8')
         return StringProducer(result)
 
     def createDeleteByQuery(self, query):
