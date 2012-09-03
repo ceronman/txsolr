@@ -19,19 +19,21 @@
 Solr Bindings for Python and Twisted
 """
 
-__author__ = 'Manuel Cerón'
-__license__ = 'http://www.apache.org/licenses/LICENSE-2.0'
-__version__ = (0,1,0)
+import logging
 
 from client import SolrClient
 from input import escapeTerm
-from errors import *
+from errors import (
+    InputError, HTTPWrongStatus, SolrResponseError, HTTPRequestError)
 
-#===============================================================================
-# Logging Configuration
-#===============================================================================
+# Used to ignore pyflakes errors.
+_ = (SolrClient, escapeTerm, InputError, HTTPWrongStatus,
+     SolrResponseError, HTTPRequestError)
 
-import logging
+__author__ = 'Manuel Cerón'
+__license__ = 'http://www.apache.org/licenses/LICENSE-2.0'
+__version__ = (0, 1, 1)
+
 
 # NOTE: this is not necessary in Python 2.7
 class _NullHandler(logging.Handler):
@@ -39,18 +41,25 @@ class _NullHandler(logging.Handler):
     def emit(self, record):
         pass
 
+
 _logger = logging.getLogger('txsolr')
 _logger.addHandler(_NullHandler())
 
+
 def logToStderr(level=logging.DEBUG):
-    global _logger
-    _logger.addHandler(logging.StreamHandler())
+    logger = logging.getLogger('txsolr')
+    formatter = logging.Formatter('%(asctime)s %(levelname)8s  %(message)s')
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.propagate = False
 
 
 def logToFile(filename, level=logging.DEBUG):
-    global _logger
-    _logger.addHandler(logging.FileHandler(filename))
-    _logger.setLevel(level)
-
-
-
+    logger = logging.getLogger('txsolr')
+    formatter = logging.Formatter('%(asctime)s %(levelname)8s  %(message)s')
+    handler = logging.FileHandler(filename)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(level)
+    logger.propagate = False

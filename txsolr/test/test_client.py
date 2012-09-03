@@ -1,66 +1,32 @@
 # -*- coding: utf-8 -*-
-
 import random
 import string
 import datetime
 
 from twisted.trial import unittest
-from twisted.internet import defer, reactor
+from twisted.internet import reactor
+from twisted.internet.defer import inlineCallbacks, Deferred
 
 from txsolr.client import SolrClient
-from txsolr.errors import HTTPWrongStatus
 
+
+# TODO: Add tests for exceptions.
 # FIXME: avoid hardcoded url
 SOLR_URL = 'http://localhost:8983/solr/'
 
-class ConnectionTestCase(unittest.TestCase):
-
-    def setUp(self):
-        self.client = SolrClient(SOLR_URL)
-
-    def test_requestPing(self):
-        return self.client.ping()
-
-    @defer.inlineCallbacks
-    def test_requestStatus(self):
-        try:
-            yield self.client._request('HEAD', '', {}, None)
-        except HTTPWrongStatus:
-            pass
-
-    def test_addRequest(self):
-        return self.client.add(dict(id=1))
-
-    def test_deleteRequest(self):
-        return self.client.delete(1)
-
-    def test_deleteByQueryRequest(self):
-        return self.client.deleteByQuery('*:*')
-
-    def test_rollbackRequest(self):
-        yield self.client.rollback()
-
-    def test_commitRequest(self):
-        return self.client.commit()
-
-    def test_optimizeRequest(self):
-        return self.client.optimize()
-
-    def test_searchRequest(self):
-        return self.client.search('sample')
 
 def _randomString(size):
-
     return ''.join(random.choice(string.letters) for _ in range(size))
+
 
 class AddingDocumentsTestCase(unittest.TestCase):
 
     def setUp(self):
         self.client = SolrClient(SOLR_URL)
 
-    @defer.inlineCallbacks
-    def test_addOneDocument(self):
-
+    @inlineCallbacks
+    def testAddOneDocument(self):
+        """L{SolrClient.add} adds one document to the index."""
         doc = {'id': _randomString(20)}
 
         yield self.client.add(doc)
@@ -74,11 +40,12 @@ class AddingDocumentsTestCase(unittest.TestCase):
         self.assertEqual(r.results.docs[0]['id'], doc['id'],
                          "Found ID does not match with added document")
 
-        defer.returnValue(None)
-
-    @defer.inlineCallbacks
-    def test_addWithOverwrite(self):
-
+    @inlineCallbacks
+    def testAddWithoutOverwrite(self):
+        """
+        L{SolrClient.add} does not overwrite documents if the C{overwrite}
+        parameter is C{False}.
+        """
         initialId = _randomString(20)
         initialName = _randomString(20)
         newName = _randomString(20)
@@ -103,14 +70,16 @@ class AddingDocumentsTestCase(unittest.TestCase):
         self.assertEqual(r.results.docs[0]['name'], initialName,
                          'Overwrite option did not work')
 
-        defer.returnValue(None)
-
-    @defer.inlineCallbacks
-    def test_addWithCommitWithin(self):
+    @inlineCallbacks
+    def testAddWithCommitWithin(self):
+        """
+        L{SolrClient.add} commits the changes within the given time if the
+        C{commitWithin} argument is C{True}.
+        """
 
         def wait(milliseconds):
-            d = defer.Deferred()
-            reactor.callLater(milliseconds/1000.0, d.callback, None)
+            d = Deferred()
+            reactor.callLater(milliseconds / 1000.0, d.callback, None)
             return d
 
         doc = {'id': _randomString(20)}
@@ -122,16 +91,16 @@ class AddingDocumentsTestCase(unittest.TestCase):
         self.assertEqual(r.results.numFound, 0,
                          "Comitted immediately")
 
-        yield wait(2000) # give extra time to the commit operation
+        yield wait(2000)  # give extra time to the commit operation
 
         r = yield self.client.search('id:%s' % doc['id'])
 
         self.assertEqual(r.results.numFound, 1,
                          "Operation was not commited")
 
-    @defer.inlineCallbacks
-    def test_addOneDocumentMultipleFields(self):
-
+    @inlineCallbacks
+    def testAddOneDocumentMultipleFields(self):
+        """L{SolrClient.add} add multiple documents with multiple fields."""
         name = _randomString(20)
         links = [_randomString(20) for _ in range(5)]
 
@@ -153,11 +122,9 @@ class AddingDocumentsTestCase(unittest.TestCase):
         for doc in r.results.docs:
             self.assertTrue(doc['links'], links)
 
-        defer.returnValue(None)
-
-    @defer.inlineCallbacks
-    def test_addManyDocuments(self):
-
+    @inlineCallbacks
+    def testAddManyDocuments(self):
+        """L{SolrClient.add} adds multiple documents to the index."""
         name = _randomString(20)
 
         docs = []
@@ -175,10 +142,9 @@ class AddingDocumentsTestCase(unittest.TestCase):
         self.assertEqual(r.results.numFound, len(docs),
                          'Document was not added')
 
-        defer.returnValue(None)
-
-    @defer.inlineCallbacks
-    def test_addUnicodeDocument(self):
+    @inlineCallbacks
+    def testAddUnicodeDocument(self):
+        """L{SolrClient.add} adds documents with unicode characters."""
         doc = {'id': _randomString(20),
                'title': [u'カカシ外伝～戦場のボーイズライフ ☝☜']}
 
@@ -190,10 +156,9 @@ class AddingDocumentsTestCase(unittest.TestCase):
         self.assertEqual(r.results.docs[0]['title'], doc['title'],
                          "Unicode value does not match with found document")
 
-        defer.returnValue(None)
-
-    @defer.inlineCallbacks
-    def test_addDocumentWithNoneField(self):
+    @inlineCallbacks
+    def testAddDocumentWithNoneField(self):
+        """L{SolrClient.add} adds documents with C{None} fields."""
         doc = {'id': _randomString(20),
                'title': None}
 
@@ -204,13 +169,10 @@ class AddingDocumentsTestCase(unittest.TestCase):
 
         self.assertFalse('title' in r.results.docs[0])
 
-        defer.returnValue(None)
-
-    @defer.inlineCallbacks
-    def test_addDocumentWithDatetime(self):
-
+    @inlineCallbacks
+    def testAddDocumentWithDatetime(self):
+        """L{SolrClient.add} adds documents with C{datetime} fields."""
         # NOTE: Microseconds are ignored by Solr
-
         doc = {'id': _randomString(20),
                'test1_dt': datetime.datetime(2010, 1, 1, 23, 59, 59, 999),
                'test2_dt': datetime.date(2010, 1, 1)}
@@ -223,22 +185,14 @@ class AddingDocumentsTestCase(unittest.TestCase):
         doc = r.results.docs[0]
 
         # FIXME: dates proably should be parsed to datetime objects
-
         self.assertEqual(doc['test1_dt'], u'2010-01-01T23:59:59Z',
                          'Datetime value does not match')
         self.assertEqual(doc['test2_dt'], u'2010-01-01T00:00:00Z',
                          'Date value does not match')
 
-        defer.returnValue(None)
-
-
-class UpdatingDocumentsTestCase(unittest.TestCase):
-
-    def setUp(self):
-        self.client = SolrClient(SOLR_URL)
-
-    @defer.inlineCallbacks
-    def test_updateOneDocument(self):
+    @inlineCallbacks
+    def testUpdateOneDocument(self):
+        """L{SolrClient.add} updates one document."""
         data = _randomString(20)
         updated_data = _randomString(20)
 
@@ -249,7 +203,6 @@ class UpdatingDocumentsTestCase(unittest.TestCase):
         yield self.client.add(doc)
         yield self.client.commit()
 
-
         # update data
         doc['test_s'] = updated_data
         yield self.client.add(doc)
@@ -259,18 +212,16 @@ class UpdatingDocumentsTestCase(unittest.TestCase):
         self.assertEqual(r.results.docs[0]['test_s'], updated_data,
                          'Update did not work')
 
-        defer.returnValue(None)
-
-    @defer.inlineCallbacks
-    def test_updateManyDocuments(self):
-
+    @inlineCallbacks
+    def testUpdateManyDocuments(self):
+        """L{SolrClient.add} updates many documents."""
         data = _randomString(20)
         updated_data = _randomString(20)
 
         docs = []
         for _ in range(5):
             doc = {'id': _randomString(20),
-                   'test_s': data }
+                   'test_s': data}
             docs.append(doc)
 
         # add initial data
@@ -289,17 +240,15 @@ class UpdatingDocumentsTestCase(unittest.TestCase):
             self.assertEqual(r.results.docs[0]['test_s'], updated_data,
                              'Multiple update did not work')
 
-        defer.returnValue(None)
-
 
 class DeletingDocumentsTestCase(unittest.TestCase):
 
     def setUp(self):
         self.client = SolrClient(SOLR_URL)
 
-    @defer.inlineCallbacks
-    def test_deleteOneDocumentByID(self):
-
+    @inlineCallbacks
+    def testDeleteOneDocumentByID(self):
+        """L{SolrClient.delete} removes a document with the given id."""
         doc = {'id': _randomString(20),
                'name': _randomString(20)}
 
@@ -312,20 +261,16 @@ class DeletingDocumentsTestCase(unittest.TestCase):
         yield self.client.commit()
 
         r = yield self.client.search('id:%s' % doc['id'])
-
         self.assertEqual(r.results.numFound, 0,
                          "The document was not deleted")
 
         r = yield self.client.search('name:%s' % doc['name'])
-
         self.assertEqual(r.results.numFound, 0,
                          "The document was not deleted")
 
-        defer.returnValue(None)
-
-    @defer.inlineCallbacks
-    def test_deleteManyDocumentsByID(self):
-
+    @inlineCallbacks
+    def testDeleteManyDocumentsByID(self):
+        """L{SolrClient.delete} removes many document with the given ids."""
         name = _randomString(20)
 
         docs = []
@@ -352,11 +297,12 @@ class DeletingDocumentsTestCase(unittest.TestCase):
             self.assertEqual(r.results.numFound, 0,
                              'Document was not deleted')
 
-        defer.returnValue(None)
-
-    @defer.inlineCallbacks
-    def test_deleteOneDocumentByQuery(self):
-
+    @inlineCallbacks
+    def testDeleteOneDocumentByQuery(self):
+        """
+        L{SolrClient.deleteByQuery} removes one document matching the given
+        query.
+        """
         doc = {'id': _randomString(20),
                'name': _randomString(20)}
 
@@ -378,10 +324,11 @@ class DeletingDocumentsTestCase(unittest.TestCase):
         self.assertEqual(r.results.numFound, 0,
                          "The document was not deleted")
 
-        defer.returnValue(None)
-
-    def test_deleteManyDocumentsByQuery(self):
-
+    def testDeleteManyDocumentsByQuery(self):
+        """
+        L{SolrClient.deleteByQuery} removes all documents matching the given
+        query.
+        """
         name = _randomString(20)
 
         docs = []
@@ -407,12 +354,10 @@ class DeletingDocumentsTestCase(unittest.TestCase):
             self.assertEqual(r.results.numFound, 0,
                              'Document was not deleted')
 
-        defer.returnValue(None)
-
 
 class QueryingDocumentsTestCase(unittest.TestCase):
 
-    @defer.inlineCallbacks
+    @inlineCallbacks
     def setUp(self):
         self.client = SolrClient(SOLR_URL)
 
@@ -466,11 +411,9 @@ class QueryingDocumentsTestCase(unittest.TestCase):
         yield self.client.add(self.documents)
         yield self.client.commit()
 
-        defer.returnValue(None)
-
-    @defer.inlineCallbacks
-    def test_simpleQuery(self):
-
+    @inlineCallbacks
+    def testSimpleQuery(self):
+        """L{SolrClient.search} resolves a simple query."""
         r = yield self.client.search('title:Bleach OR title:"Death Note"')
 
         self.assertEqual(r.results.numFound, 2,
@@ -480,12 +423,11 @@ class QueryingDocumentsTestCase(unittest.TestCase):
             self.assertTrue(doc['id'] in (self.bleachId, self.deathnoteId),
                             'Document found does not match with added one')
 
-        defer.returnValue(None)
+    @inlineCallbacks
+    def testUnicodeQuery(self):
+        """L{SolrClient.search} resolves queries with unicode characters."""
 
-    @defer.inlineCallbacks
-    def test_unicodeQuery(self):
-
-        r = yield self.client.search(u'info_t:ブリーチ') # Bleach in Japanese
+        r = yield self.client.search(u'info_t:ブリーチ')
 
         self.assertEqual(r.results.numFound, 1,
                          'Wrong numFound after query')
@@ -494,10 +436,25 @@ class QueryingDocumentsTestCase(unittest.TestCase):
         self.assertEqual(doc['id'], self.bleachId,
                         'Document found does not match with added one')
 
-        defer.returnValue(None)
+    @inlineCallbacks
+    def testSearchWithUnicodeArguments(self):
+        """
+        L{SolrClient.search} accepts query arguments such as filter query.
+        """
+        r = yield self.client.search('*:*', fq=u'info_t:ブリーチ')
 
-    @defer.inlineCallbacks
-    def test_queryWithFields(self):
+        self.assertEqual(r.results.numFound, 1,
+                         'Wrong numFound after query')
+
+        doc = r.results.docs[0]
+        self.assertEqual(doc['id'], self.bleachId,
+                        'Document found does not match with added one')
+
+    @inlineCallbacks
+    def testQueryWithFields(self):
+        """
+        L{SolrClient.search} shows which field to show in the result C{dict}.
+        """
 
         # Fist test query with a single field
         r = yield self.client.search('info_t:manga', fl='links')
@@ -544,10 +501,9 @@ class QueryingDocumentsTestCase(unittest.TestCase):
             self.assertTrue('popularity' in doc,
                             'Results do not have specified field')
 
-        defer.returnValue(None)
-
-    @defer.inlineCallbacks
-    def test_queryWithScore(self):
+    @inlineCallbacks
+    def testQueryWithScore(self):
+        """L{SolrClient.search} shows the score of the results."""
         r = yield self.client.search('info_t:manga', fl='id,score')
         for doc in r.results.docs:
             self.assertTrue('id' in doc,
@@ -556,23 +512,19 @@ class QueryingDocumentsTestCase(unittest.TestCase):
             self.assertTrue('score' in doc,
                            'Results do not have score')
 
-        defer.returnValue(None)
-
-    @defer.inlineCallbacks
-    def test_queryWithHighlight(self):
-
-        # TODO: poor test. Improve it
-
+    # TODO: poor test. Improve it
+    @inlineCallbacks
+    def testQueryWithHighlight(self):
+        """L{SolrClient.search} shows highlighting."""
         r = yield self.client.search('info_t:manga',
                                      hl='true',
                                      hl_fl='info_t')
 
         self.assertTrue(hasattr(r, 'highlighting'))
 
-        defer.returnValue(None)
-
-    @defer.inlineCallbacks
-    def test_queryWithSort(self):
+    @inlineCallbacks
+    def testQueryWithSort(self):
+        """L{SolrClient.search} shows sorted results."""
         r = yield self.client.search('info_t:manga', sort='popularity desc')
         docs = r.results.docs
 
@@ -585,18 +537,13 @@ class QueryingDocumentsTestCase(unittest.TestCase):
         self.assertEqual(docs[2]['id'], self.bleachId,
                          'Wrong sorting order')
 
-        defer.returnValue(None)
-
-    @defer.inlineCallbacks
-    def test_queryWithFacet(self):
-
-        # TODO: poor test. Improve it
-
+    # TODO: poor test. Improve it
+    @inlineCallbacks
+    def testQueryWithFacet(self):
+        """L{SolrClient.search} shows facets."""
         # field facet
-        r = yield self.client.search('info_t:manga',
-                                     facet = 'true',
-                                     facet_field = 'category')
-
+        r = yield self.client.search('info_t:manga', facet='true',
+                                     facet_field='category')
 
         category_facet = r.facet_counts['facet_fields']['category']
 
@@ -604,24 +551,19 @@ class QueryingDocumentsTestCase(unittest.TestCase):
 
         # query facet
         # FIXME: current api does not allow multiple facet queries or fields
-        r = yield self.client.search('info_t:manga',
-                                     facet = 'true',
-                                     facet_query = 'popularity:[0 TO 8]')
+        r = yield self.client.search('info_t:manga', facet='true',
+                                     facet_query='popularity:[0 TO 8]')
 
         facet_queries = r.facet_counts['facet_queries']
 
         self.assertEqual(len(facet_queries), 1, 'Unexpected facet')
 
-        defer.returnValue(None)
-
-    @defer.inlineCallbacks
+    @inlineCallbacks
     def tearDown(self):
         ids = [doc['id'] for doc in self.documents]
 
         yield self.client.delete(ids)
         yield self.client.commit()
-
-        defer.returnValue(None)
 
 
 class CommitingTestCase(unittest.TestCase):
@@ -629,31 +571,27 @@ class CommitingTestCase(unittest.TestCase):
     def setUp(self):
         self.client = SolrClient(SOLR_URL)
 
-    @defer.inlineCallbacks
-    def test_commit(self):
+    @inlineCallbacks
+    def testCommit(self):
+        """L{SolrClient.commits} commits the changes to Solr."""
         doc = {'id': _randomString(20)}
-
         yield self.client.add(doc)
-
         r = yield self.client.search('id:%s' % doc['id'])
-
         self.assertEqual(r.results.numFound, 0,
                          'Document addition was commited')
 
         yield self.client.commit()
 
         r = yield self.client.search('id:%s' % doc['id'])
-
         self.assertEqual(r.results.numFound, 1,
                          'Commit did not work')
 
-        defer.returnValue(None)
-
-    @defer.inlineCallbacks
-    def test_rollback(self):
-
+    @inlineCallbacks
+    def testRollback(self):
+        """
+        L{SolrClient.rollback} withdraws all the changes since the last commit.
+        """
         doc = {'id': _randomString(20)}
-
         yield self.client.add(doc)
         yield self.client.rollback()
         yield self.client.commit()
@@ -663,25 +601,17 @@ class CommitingTestCase(unittest.TestCase):
         self.assertEqual(r.results.numFound, 0,
                          'Rollback did not work')
 
-        defer.returnValue(None)
-
-    @defer.inlineCallbacks
-    def tests_optimize(self):
-
+    @inlineCallbacks
+    def testsOptimize(self):
+        """L{SolrClient.optimize} commits and optimizes the index."""
         doc = {'id': _randomString(20)}
-
         yield self.client.add(doc)
-
         r = yield self.client.search('id:%s' % doc['id'])
-
         self.assertEqual(r.results.numFound, 0,
                          'Document addition was commited')
 
         yield self.client.optimize()
 
         r = yield self.client.search('id:%s' % doc['id'])
-
         self.assertEqual(r.results.numFound, 1,
                          'Optimize did not work')
-
-        defer.returnValue(None)
