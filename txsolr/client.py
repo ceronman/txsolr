@@ -149,7 +149,11 @@ class SolrClient(object):
         else:
             method = 'POST'
             path = '/select'
-            headers = {'Content-type': ['application/x-www-form-urlencoded']}
+            headers = {
+                'Content-type': [
+                    'application/x-www-form-urlencoded; charset=UTF-8'
+                ]
+            }
             input = StringProducer(query)
 
         return self._request(method, path, headers, input)
